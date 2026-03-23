@@ -99,7 +99,7 @@ export const constantRoutes = [
       {
         path: "index",
         component: () => import("@/views/test/index.vue"),
-        name: "Test",
+        name: "ProTableDemo",
         meta: { title: "测试", icon: "test" },
       },
     ],

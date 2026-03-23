@@ -7,5 +7,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ProTable: typeof import('../components/ProTable/index.vue')['default']
   }
 }
