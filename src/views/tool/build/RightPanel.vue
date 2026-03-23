@@ -629,7 +629,7 @@ function addSelectItem(): void {
 }
 
 function addTreeItem(): void {
-  ++proxy.idGlobal
+  proxy.idGlobal = (proxy.idGlobal ?? 0) + 1
   dialogVisible.value = true
   currentNode.value = props.activeData.options
 }

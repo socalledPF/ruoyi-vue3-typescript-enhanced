@@ -68,16 +68,43 @@
 import { getCache } from '@/api/monitor/cache'
 import * as echarts from 'echarts'
 
-const cache = ref([])
-const commandstats = ref(null)
-const usedmemory = ref(null)
+interface CacheInfoData {
+  redis_version: string
+  redis_mode: string
+  tcp_port: string
+  connected_clients: string
+  uptime_in_days: string
+  used_memory_human: string
+  used_cpu_user_children: string
+  maxmemory_human: string
+  aof_enabled: string
+  rdb_last_bgsave_status: string
+  instantaneous_input_kbps: string
+  instantaneous_output_kbps: string
+}
+
+interface CommandStatItem {
+  name: string
+  value: number
+}
+
+interface CacheMonitorData {
+  info: CacheInfoData
+  dbSize: number
+  commandStats: CommandStatItem[]
+}
+
+const cache = ref<CacheMonitorData | null>(null)
+const commandstats = ref<HTMLElement | null>(null)
+const usedmemory = ref<HTMLElement | null>(null)
 const { proxy } = getCurrentInstance()
 
 function getList(): void {
   proxy.$modal.loading("正在加载缓存监控数据，请稍候！")
   getCache().then(response => {
     proxy.$modal.closeLoading()
-    cache.value = response.data!
+    const cacheData = response.data as CacheMonitorData
+    cache.value = cacheData
 
     const commandstatsIntance = echarts.init(commandstats.value!, "macarons")
     commandstatsIntance.setOption({
@@ -92,7 +119,7 @@ function getList(): void {
           roseType: "radius",
           radius: [15, 95],
           center: ["50%", "38%"],
-          data: response.data!.commandStats,
+          data: cacheData.commandStats,
           animationEasing: "cubicInOut",
           animationDuration: 1000
         }

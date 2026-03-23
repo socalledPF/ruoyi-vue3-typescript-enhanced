@@ -31,6 +31,13 @@
 import { isExternal } from '@/utils/validate'
 import AppLink from './Link.vue'
 import { getNormalPath } from '@/utils/ruoyi'
+import type { RouterVo } from '@/types'
+
+interface SidebarRoute extends RouterVo {
+  path: string
+  noShowingChildren?: boolean
+  children?: SidebarRoute[]
+}
 
 const props = defineProps({
   // route object
@@ -48,13 +55,13 @@ const props = defineProps({
   }
 })
 
-const onlyOneChild = ref({})
+const onlyOneChild = ref<SidebarRoute>({ path: '' })
 
-function hasOneShowingChild(children: any[] = [], parent: any) {
+function hasOneShowingChild(children: SidebarRoute[] = [], parent: SidebarRoute): boolean {
   if (!children) {
     children = []
   }
-  const showingChildren = children.filter(item => {
+  const showingChildren = children.filter((item: SidebarRoute) => {
     if (item.hidden) {
       return false
     }
@@ -76,7 +83,7 @@ function hasOneShowingChild(children: any[] = [], parent: any) {
   return false
 }
 
-function resolvePath(routePath: string, routeQuery?: string): string | { path: string; query: Record<string, any> } {
+function resolvePath(routePath: string, routeQuery?: string): string | { path: string; query: Record<string, unknown> } {
   if (isExternal(routePath)) {
     return routePath
   }
@@ -84,8 +91,8 @@ function resolvePath(routePath: string, routeQuery?: string): string | { path: s
     return props.basePath
   }
   if (routeQuery) {
-    const query = JSON.parse(routeQuery)
-    return { path: getNormalPath(props.basePath + '/' + routePath), query: query }
+    const query = JSON.parse(routeQuery) as Record<string, unknown>
+    return { path: getNormalPath(props.basePath + '/' + routePath), query }
   }
   return getNormalPath(props.basePath + '/' + routePath)
 }

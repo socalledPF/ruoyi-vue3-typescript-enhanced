@@ -67,12 +67,36 @@ import useUserStore from "@/store/modules/user"
 const userStore = useUserStore()
 const { proxy } = getCurrentInstance()
 
+interface CropperInstance {
+  rotateLeft: () => void
+  rotateRight: () => void
+  changeScale: (num: number) => void
+  getCropBlob: (callback: (data: Blob) => void) => void
+}
+
+interface CropperPreviewData {
+  url: string
+  img: Record<string, string | number>
+}
+
+interface AvatarOptions {
+  img: string
+  autoCrop: boolean
+  autoCropWidth: number
+  autoCropHeight: number
+  fixedBox: boolean
+  outputType: string
+  filename: string
+  previews: Partial<CropperPreviewData>
+}
+
 const open = ref<boolean>(false)
 const visible = ref<boolean>(false)
+const cropper = ref<CropperInstance>()
 const title = ref<string>("修改头像")
 
 //图片裁剪数据
-const options = reactive<any>({
+const options = reactive<AvatarOptions>({
   img: userStore.avatar,     // 裁剪图片的地址
   autoCrop: true,            // 是否默认生成截图框
   autoCropWidth: 200,        // 默认生成截图框宽度
@@ -98,18 +122,18 @@ function requestUpload() {}
 
 /** 向左旋转 */
 function rotateLeft() {
-  proxy.$refs.cropper.rotateLeft()
+  cropper.value?.rotateLeft()
 }
 
 /** 向右旋转 */
 function rotateRight() {
-  proxy.$refs.cropper.rotateRight()
+  cropper.value?.rotateRight()
 }
 
 /** 图片缩放 */
 function changeScale(num: number) {
   num = num || 1
-  proxy.$refs.cropper.changeScale(num)
+  cropper.value?.changeScale(num)
 }
 
 /** 上传预处理 */
@@ -120,7 +144,7 @@ function beforeUpload(file: File) {
     const reader = new FileReader()
     reader.readAsDataURL(file)
     reader.onload = () => {
-      options.img = reader.result
+      options.img = typeof reader.result === "string" ? reader.result : options.img
       options.filename = file.name
     }
   }
@@ -128,7 +152,7 @@ function beforeUpload(file: File) {
 
 /** 上传图片 */
 function uploadImg() {
-  proxy.$refs.cropper.getCropBlob((data: Blob) => {
+  cropper.value?.getCropBlob((data: Blob) => {
     const formData = new FormData()
     formData.append("avatarfile", data, options.filename)
     uploadAvatar(formData).then(response => {
@@ -142,14 +166,14 @@ function uploadImg() {
 }
 
 /** 实时预览 */
-function realTime(data: any) {
+function realTime(data: CropperPreviewData) {
   options.previews = data
 }
 
 /** 关闭窗口 */
 function closeDialog() {
   options.img = userStore.avatar
-  options.visible = false
+  visible.value = false
 }
 </script>
 

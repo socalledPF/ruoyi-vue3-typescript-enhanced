@@ -180,6 +180,7 @@ import useDictStore from '@/store/modules/dict'
 import { optionselect as getDictOptionselect, getType } from "@/api/system/dict/type"
 import { listData, getData, delData, addData, updateData } from "@/api/system/dict/data"
 import type { SysDictData, SysDictType, DictDataQueryParams } from '@/types/api/system/dict'
+import type { FormInstance } from "element-plus"
 
 interface ListClassOption {
   value: string
@@ -201,6 +202,7 @@ const title = ref<string>("")
 const defaultDictType = ref<string>("")
 const typeOptions = ref<SysDictType[]>([])
 const route = useRoute()
+const dataRef = ref<FormInstance>()
 // 数据标签回显样式
 const listClassOptions = ref<ListClassOption[]>([
   { value: "default", label: "默认" }, 
@@ -323,7 +325,7 @@ function handleUpdate(row?: SysDictData) {
 
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["dataRef"].validate((valid: boolean) => {
+  dataRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (form.value.dictCode != undefined) {
         updateData(form.value).then(() => {

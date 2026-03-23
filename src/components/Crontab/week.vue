@@ -97,7 +97,11 @@ const average02 = ref<number>(2)
 const weekday = ref<number>(2)
 const checkboxList = ref<number[]>([])
 const checkCopy = ref<number[]>([2])
-const weekList = ref<any[]>([
+interface WeekOption {
+    key: number
+    value: string
+}
+const weekList = ref<WeekOption[]>([
     {key: 1, value: '星期日'},
     {key: 2, value: '星期一'},
     {key: 3, value: '星期二'},

@@ -239,10 +239,11 @@
 </template>
 
 <script setup lang="ts" name="Job">
-import JobDetail from './detail'
+import JobDetail from './detail.vue'
 import Crontab from '@/components/Crontab/index.vue'
 import { listJob, getJob, delJob, addJob, updateJob, runJob, changeJobStatus } from "@/api/monitor/job"
 import type { JobQueryParams, SysJob } from '@/types/api/monitor/job'
+import type { FormInstance } from "element-plus"
 
 const router = useRouter()
 const { proxy } = getCurrentInstance()
@@ -260,6 +261,7 @@ const title = ref<string>("")
 const openView = ref<boolean>(false)
 const openCron = ref<boolean>(false)
 const expression = ref<string>("")
+const jobRef = ref<FormInstance>()
 
 const data = reactive({
   form: {} as SysJob,
@@ -395,7 +397,7 @@ function handleUpdate(row?: SysJob) {
 
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["jobRef"].validate((valid: boolean) => {
+  jobRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (form.value.jobId != undefined) {
         updateJob(form.value).then(() => {

@@ -2,7 +2,7 @@ import request from '@/utils/request'
 import type { SysCache, AjaxResult } from '@/types'
 
 // 查询缓存详细
-export function getCache(): Promise<AjaxResult<any>> {
+export function getCache(): Promise<AjaxResult<unknown>> {
   return request({
     url: '/monitor/cache',
     method: 'get'

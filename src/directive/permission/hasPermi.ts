@@ -5,7 +5,7 @@
 import useUserStore from '@/store/modules/user'
 
 export default {
-  mounted(el: HTMLElement, binding: DirectiveBinding, vnode: any) {
+  mounted(el: HTMLElement, binding: DirectiveBinding) {
     const { value } = binding
     const all_permission = "*:*:*"
     const permissions = useUserStore().permissions

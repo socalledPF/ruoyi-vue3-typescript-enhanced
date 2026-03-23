@@ -1,8 +1,8 @@
 interface CacheInterface {
   set(key: string, value: string): void
   get(key: string): string | null
-  setJSON(key: string, jsonValue: any): void
-  getJSON(key: string): any
+  setJSON<T>(key: string, jsonValue: T): void
+  getJSON<T>(key: string): T | null
   remove(key: string): void
 }
 
@@ -24,15 +24,15 @@ const sessionCache: CacheInterface = {
     }
     return sessionStorage.getItem(key)
   },
-  setJSON (key: string, jsonValue: any) {
+  setJSON<T> (key: string, jsonValue: T) {
     if (jsonValue != null) {
       this.set(key, JSON.stringify(jsonValue))
     }
   },
-  getJSON (key: string): any {
+  getJSON<T> (key: string): T | null {
     const value = this.get(key)
     if (value != null) {
-      return JSON.parse(value)
+      return JSON.parse(value) as T
     }
     return null
   },
@@ -59,15 +59,15 @@ const localCache: CacheInterface = {
     }
     return localStorage.getItem(key)
   },
-  setJSON (key: string, jsonValue: any) {
+  setJSON<T> (key: string, jsonValue: T) {
     if (jsonValue != null) {
       this.set(key, JSON.stringify(jsonValue))
     }
   },
-  getJSON (key: string): any {
+  getJSON<T> (key: string): T | null {
     const value = this.get(key)
     if (value != null) {
-      return JSON.parse(value)
+      return JSON.parse(value) as T
     }
     return null
   },

@@ -61,7 +61,11 @@ const average01 = ref<number>(1)
 const average02 = ref<number>(1)
 const checkboxList = ref<number[]>([])
 const checkCopy = ref<number[]>([1])
-const monthList = ref<any[]>([
+interface MonthOption {
+    key: number
+    value: string
+}
+const monthList = ref<MonthOption[]>([
     {key: 1, value: '一月'},
     {key: 2, value: '二月'},
     {key: 3, value: '三月'},

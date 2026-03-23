@@ -15,7 +15,12 @@ Math.easeInOutQuad = function(t: number, b: number, c: number, d: number): numbe
 
 // requestAnimationFrame for Smart Animating http://goo.gl/sx5sts
 const requestAnimFrame = (function() {
-  return window.requestAnimationFrame || (window as any).webkitRequestAnimationFrame || (window as any).mozRequestAnimationFrame || function(callback: FrameRequestCallback) { window.setTimeout(callback, 1000 / 60) }
+  type LegacyWindow = Window & {
+    webkitRequestAnimationFrame?: typeof window.requestAnimationFrame
+    mozRequestAnimationFrame?: typeof window.requestAnimationFrame
+  }
+  const w = window as LegacyWindow
+  return window.requestAnimationFrame || w.webkitRequestAnimationFrame || w.mozRequestAnimationFrame || function(callback: FrameRequestCallback) { window.setTimeout(callback, 1000 / 60) }
 })()
 
 /**

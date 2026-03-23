@@ -3,9 +3,9 @@ import { parseTime } from './ruoyi'
 /**
  * 表格时间格式化
  */
-export function formatDate(cellValue: any): string {
+export function formatDate(cellValue: unknown): string {
   if (cellValue == null || cellValue == "") return ""
-  const date = new Date(cellValue) 
+  const date = new Date(cellValue as string | number | Date)
   const year = date.getFullYear()
   const month = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
   const day = date.getDate() < 10 ? '0' + date.getDate() : date.getDate() 
@@ -97,8 +97,8 @@ export function byteLength(str: string): number {
  * @param actual
  * @returns {Array}
  */
-export function cleanArray(actual: any[]): any[] {
-  const newArray: any[] = []
+export function cleanArray<T>(actual: T[]): T[] {
+  const newArray: T[] = []
   for (let i = 0; i < actual.length; i++) {
     if (actual[i]) {
       newArray.push(actual[i])
@@ -111,12 +111,12 @@ export function cleanArray(actual: any[]): any[] {
  * @param json
  * @returns {Array}
  */
-export function param(json: Record<string, any>): string {
+export function param(json: Record<string, unknown>): string {
   if (!json) return ''
   return cleanArray(
     Object.keys(json).map(key => {
       if (json[key] === undefined) return ''
-      return encodeURIComponent(key) + '=' + encodeURIComponent(json[key])
+      return encodeURIComponent(key) + '=' + encodeURIComponent(String(json[key]))
     })
   ).join('&')
 }
@@ -159,19 +159,22 @@ export function html2Text(val: string): string {
  * @param source
  * @returns {Object}
  */
-export function objectMerge(target: any, source: any): any {
-  if (typeof target !== 'object') {
+export function objectMerge(target: unknown, source: unknown): unknown {
+  if (typeof target !== 'object' || target === null) {
     target = {}
   }
   if (Array.isArray(source)) {
     return source.slice()
   }
+  if (typeof source !== 'object' || source === null) {
+    return target
+  }
   Object.keys(source).forEach(property => {
-    const sourceProperty = source[property]
+    const sourceProperty = (source as Record<string, unknown>)[property]
     if (typeof sourceProperty === 'object') {
-      target[property] = objectMerge(target[property], sourceProperty)
+      ;(target as Record<string, unknown>)[property] = objectMerge((target as Record<string, unknown>)[property], sourceProperty)
     } else {
-      target[property] = sourceProperty
+      ;(target as Record<string, unknown>)[property] = sourceProperty
     }
   })
   return target
@@ -220,12 +223,14 @@ export function deepClone<T>(source: T): T {
   if (!source && typeof source !== 'object') {
     throw new Error('error arguments')
   }
-  const targetObj = (source as any).constructor === Array ? [] : {}
-  Object.keys(source as any).forEach(keys => {
-    if ((source as any)[keys] && typeof (source as any)[keys] === 'object') {
-      (targetObj as any)[keys] = deepClone((source as any)[keys])
+  const sourceRecord = source as Record<string, unknown>
+  const targetObj: Record<string, unknown> | unknown[] = Array.isArray(source) ? [] : {}
+  Object.keys(sourceRecord).forEach((key: string) => {
+    const value = sourceRecord[key]
+    if (value && typeof value === 'object') {
+      ;(targetObj as Record<string, unknown>)[key] = deepClone(value)
     } else {
-      (targetObj as any)[keys] = (source as any)[keys]
+      ;(targetObj as Record<string, unknown>)[key] = value
     }
   })
   return targetObj as T

@@ -1,5 +1,5 @@
 /** API 通用响应类型 */
-export interface AjaxResult<T = any> {
+export interface AjaxResult<T = unknown> {
   /** 状态码 */
   code: number
   /** 返回内容 */
@@ -9,7 +9,7 @@ export interface AjaxResult<T = any> {
 }
 
 /** API 表格响应类型 */
-export interface TableDataInfo<T = any> {
+export interface TableDataInfo<T = unknown> {
   /** 状态码 */
   code: number
   /** 返回内容 */
@@ -49,7 +49,7 @@ export interface BaseEntity {
   /** 备注 */
   remark?: string
   /** 请求参数 */
-  params?: Record<string, any>
+  params?: Record<string, unknown>
 }
 
 /** Treeselect树结构类型 */

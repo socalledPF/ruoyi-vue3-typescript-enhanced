@@ -15,7 +15,7 @@ export function isPathMatch(pattern: string, path: string): boolean {
  * @param value
  * @returns {Boolean}
  */
-export function isEmpty(value: any): boolean {
+export function isEmpty(value: unknown): boolean {
   if (value == null || value == "" || value == undefined || value == "undefined") {
     return true
   }
@@ -98,7 +98,7 @@ export function validEmail(email: string): boolean {
  * @param str
  * @returns {Boolean}
  */
-export function isString(str: any): boolean {
+export function isString(str: unknown): boolean {
   return typeof str === 'string' || str instanceof String
 }
 
@@ -106,7 +106,7 @@ export function isString(str: any): boolean {
  * @param arg
  * @returns {Boolean}
  */
-export function isArray(arg: any): boolean {
+export function isArray(arg: unknown): boolean {
   if (typeof Array.isArray === 'undefined') {
     return Object.prototype.toString.call(arg) === '[object Array]'
   }

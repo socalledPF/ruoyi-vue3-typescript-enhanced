@@ -223,6 +223,7 @@ import type { SysUser, UserQueryParams, UserFormDataResult } from '@/types/api/s
 import type { SysRole } from '@/types/api/system/role'
 import type { SysPost } from '@/types/api/system/post'
 import type { TreeSelect, TableShowColumns, AjaxResult } from '@/types/api/common'
+import type { FormInstance, TreeInstance, UploadFile, UploadInstance } from "element-plus"
 
 const router = useRouter()
 const appStore = useAppStore()
@@ -240,6 +241,9 @@ const total = ref<number>(0)
 const title = ref<string>("")
 const dateRange = ref<string[]>([])
 const deptName = ref<string>("")
+const deptTreeRef = ref<TreeInstance>()
+const uploadRef = ref<UploadInstance>()
+const userRef = ref<FormInstance>()
 const deptOptions = ref<TreeSelect[] | undefined>(undefined)
 const enabledDeptOptions = ref<TreeSelect[] | undefined>(undefined)
 const initPassword = ref<string | undefined>(undefined)
@@ -258,7 +262,8 @@ const upload = reactive({
   // 设置上传的请求头部
   headers: { Authorization: "Bearer " + getToken() },
   // 上传的地址
-  url: import.meta.env.VITE_APP_BASE_API + "/system/user/importData"
+  url: import.meta.env.VITE_APP_BASE_API + "/system/user/importData",
+  selectedFile: undefined as UploadFile | undefined
 })
 // 列显隐信息
 const columns = ref<Record<string, TableShowColumns>>({
@@ -293,14 +298,14 @@ const data = reactive({
 const { queryParams, form, rules } = toRefs(data)
 
 /** 通过条件过滤节点  */
-const filterNode = (value: string, data: any): boolean => {
+const filterNode = (value: string, data: TreeSelect): boolean => {
   if (!value) return true
-  return data.label.indexOf(value) !== -1
+  return (data.label ?? "").includes(value)
 }
 
 /** 根据名称筛选部门树 */
 watch(deptName, (val: string) => {
-  proxy.$refs["deptTreeRef"].filter(val)
+  deptTreeRef.value?.filter(val)
 })
 
 /** 查询用户列表 */
@@ -335,7 +340,7 @@ function filterDisabledDept(deptList: TreeSelect[]) {
 }
 
 /** 节点单击事件 */
-function handleNodeClick(data: any) {
+function handleNodeClick(data: TreeSelect) {
   queryParams.value.deptId = data.id
   handleQuery()
 }
@@ -351,7 +356,7 @@ function resetQuery() {
   dateRange.value = []
   proxy.resetForm("queryRef")
   queryParams.value.deptId = undefined
-  proxy.$refs.deptTreeRef.setCurrentKey(null)
+  deptTreeRef.value?.setCurrentKey(null)
   handleQuery()
 }
 
@@ -437,7 +442,7 @@ function handleSelectionChange(selection: SysUser[]) {
 function handleImport() {
   upload.title = "用户导入"
   upload.open = true
-  upload.selectedFile = null
+  upload.selectedFile = undefined
 }
 
 /** 下载模板操作 */
@@ -447,25 +452,25 @@ function importTemplate() {
 }
 
 /**文件上传中处理 */
-const handleFileUploadProgress = (event: any, file: any, fileList: any[]) => {
+const handleFileUploadProgress = () => {
   upload.isUploading = true
 }
 
 /** 文件选择处理 */
-const handleFileChange = (file: any, fileList: any[]) => {
+const handleFileChange = (file: UploadFile) => {
   upload.selectedFile = file
 }
 
 /** 文件删除处理 */
-const handleFileRemove = (file: any, fileList: any[]) => {
-  upload.selectedFile = null
+const handleFileRemove = () => {
+  upload.selectedFile = undefined
 }
 
 /** 文件上传成功处理 */
-const handleFileSuccess = (response: AjaxResult, file: any, fileList: any[]) => {
+const handleFileSuccess = (response: AjaxResult, file: UploadFile) => {
   upload.open = false
   upload.isUploading = false
-  proxy.$refs["uploadRef"].handleRemove(file)
+  uploadRef.value?.handleRemove(file)
   proxy.$alert("<div style='overflow: auto;overflow-x: hidden;max-height: 70vh;padding: 10px 20px 0;'>" + response.msg + "</div>", "导入结果", { dangerouslyUseHTMLString: true })
   getList()
 }
@@ -473,11 +478,12 @@ const handleFileSuccess = (response: AjaxResult, file: any, fileList: any[]) => 
 /** 提交上传文件 */
 function submitFileForm() {
   const file = upload.selectedFile
-  if (!file || file.length === 0 || !file.name.toLowerCase().endsWith('.xls') && !file.name.toLowerCase().endsWith('.xlsx')) {
+  const fileName = file?.name?.toLowerCase()
+  if (!fileName || (!fileName.endsWith('.xls') && !fileName.endsWith('.xlsx'))) {
     proxy.$modal.msgError("请选择后缀为 “xls”或“xlsx”的文件。")
     return
   }
-  proxy.$refs["uploadRef"].submit()
+  uploadRef.value?.submit()
 }
 
 /** 重置操作表单 */
@@ -535,7 +541,7 @@ function handleUpdate(row?: SysUser) {
 
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["userRef"].validate((valid: boolean) => {
+  userRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (form.value.userId != undefined) {
         updateUser(form.value).then(() => {

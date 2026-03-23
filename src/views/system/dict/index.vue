@@ -181,10 +181,11 @@
 </template>
 
 <script setup lang="ts" name="Dict">
-import DictDataDrawer from './detail'
+import DictDataDrawer from './detail.vue'
 import useDictStore from '@/store/modules/dict'
 import { listType, getType, delType, addType, updateType, refreshCache } from "@/api/system/dict/type"
 import type { SysDictType, DictTypeQueryParams } from '@/types/api/system/dict'
+import type { FormInstance } from "element-plus"
 
 const { proxy } = getCurrentInstance()
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable")
@@ -201,6 +202,7 @@ const title = ref<string>("")
 const dateRange = ref<string[]>([])
 const drawerVisible = ref<boolean>(false)
 const drawerRow = ref<SysDictType[]>([])
+const dictRef = ref<FormInstance>()
 
 const data = reactive({
   form: {} as SysDictType,
@@ -298,7 +300,7 @@ function handleUpdate(row?: SysDictType) {
 
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["dictRef"].validate((valid: boolean) => {
+  dictRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (form.value.dictId != undefined) {
         updateType(form.value).then(() => {

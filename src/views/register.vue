@@ -77,6 +77,7 @@
 
 <script setup lang="ts">
 import { ElMessageBox } from "element-plus"
+import type { FormInstance } from "element-plus"
 import { getCodeImg, register } from "@/api/login"
 import defaultSettings from '@/settings'
 import type { RegisterForm } from '@/types/api/login'
@@ -122,9 +123,10 @@ const registerRules = {
 const codeUrl = ref<string>("")
 const loading = ref<boolean>(false)
 const captchaEnabled = ref<boolean>(true)
+const registerRef = ref<FormInstance>()
 
 function handleRegister(): void {
-  proxy.$refs.registerRef.validate((valid: boolean) => {
+  registerRef.value?.validate((valid: boolean) => {
     if (valid) {
       loading.value = true
       register(registerForm.value).then(() => {

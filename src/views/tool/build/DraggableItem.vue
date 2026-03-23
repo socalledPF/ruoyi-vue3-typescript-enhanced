@@ -28,6 +28,15 @@
 import draggable from "vuedraggable/dist/vuedraggable.common"
 import render from '@/utils/generator/render'
 
+interface FormBuilderElement {
+  [key: string]: unknown
+  formId?: string | number
+  layout?: string
+  gutter?: number
+  justify?: string
+  align?: string
+}
+
 const props = defineProps({
   element: Object,
   index: Number,
@@ -41,17 +50,17 @@ const className = ref('')
 const draggableItemRef = ref(null)
 const emits = defineEmits(['activeItem', 'copyItem', 'deleteItem'])
 
-function activeItem(item: Element): void {
+function activeItem(item: FormBuilderElement): void {
   emits('activeItem', item)
 }
-function copyItem(item: Element, parent?: Element[]): void {
+function copyItem(item: FormBuilderElement, parent?: FormBuilderElement[]): void {
   emits('copyItem', item, parent ?? props.drawingList)
 }
-function deleteItem(item: number | Element, parent?: Element[]): void {
+function deleteItem(item: number | FormBuilderElement, parent?: FormBuilderElement[]): void {
   emits('deleteItem', item, parent ?? props.drawingList)
 }
 
-function getComponentData(): Record<string, any> {
+function getComponentData(): Record<string, unknown> {
   return {
     gutter: props.element.gutter,
     justify: props.element.justify,
@@ -59,7 +68,7 @@ function getComponentData(): Record<string, any> {
   }
 }
 
-watch(() => props.activeId, (val: string) => {
+watch(() => props.activeId, (val: string | number) => {
   className.value = (props.element.layout === 'rowFormItem' ? 'drawing-row-item' : 'drawing-item') + (val === props.element.formId ? ' active-from-item' : '')
   if (props.formConf.unFocusedComponentBorder) {
     className.value += ' unfocus-bordered'

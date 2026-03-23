@@ -49,6 +49,7 @@
 import { getAuthRole, updateAuthRole } from "@/api/system/user"
 import type { SysRole } from '@/types/api/system/role'
 import type { SysUser } from '@/types/api/system/user'
+import type { TableInstance } from "element-plus"
 
 const route = useRoute()
 const { proxy } = getCurrentInstance()
@@ -64,6 +65,7 @@ const pageNum = ref<number>(1)
 const pageSize = ref<number>(10)
 const roleIds = ref<number[]>([])
 const roles = ref<SysRoleWithFlag[]>([])
+const roleRef = ref<TableInstance>()
 const form = ref<SysUser>({
   nickName: undefined,
   userName: undefined,
@@ -73,7 +75,7 @@ const form = ref<SysUser>({
 /** 单击选中行数据 */
 function clickRow(row: SysRole) {
   if (checkSelectable(row)) {
-    proxy.$refs["roleRef"].toggleRowSelection(row)
+    roleRef.value?.toggleRowSelection(row)
   }
 }
 
@@ -119,7 +121,7 @@ function submitForm() {
       nextTick(() => {
         roles.value.forEach((row: SysRoleWithFlag) => {
           if (row.flag) {
-            proxy.$refs["roleRef"].toggleRowSelection(row)
+            roleRef.value?.toggleRowSelection(row)
           }
         })
       })

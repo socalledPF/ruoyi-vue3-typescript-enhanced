@@ -161,6 +161,7 @@
 <script setup lang="ts" name="Notice">
 import { listNotice, getNotice, delNotice, addNotice, updateNotice } from "@/api/system/notice"
 import type { SysNotice, NoticeQueryParams } from '@/types/api/system/notice'
+import type { FormInstance } from "element-plus"
 
 const { proxy } = getCurrentInstance()
 const { sys_notice_status, sys_notice_type } = proxy.useDict("sys_notice_status", "sys_notice_type")
@@ -174,6 +175,7 @@ const single = ref<boolean>(true)
 const multiple = ref<boolean>(true)
 const total = ref<number>(0)
 const title = ref<string>("")
+const noticeRef = ref<FormInstance>()
 
 const data = reactive({
   form: {} as SysNotice,
@@ -259,7 +261,7 @@ function handleUpdate(row?: SysNotice) {
 
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["noticeRef"].validate((valid: boolean) => {
+  noticeRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (form.value.noticeId != undefined) {
         updateNotice(form.value).then(() => {

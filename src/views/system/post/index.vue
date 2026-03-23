@@ -147,6 +147,7 @@
 <script setup lang="ts" name="Post">
 import { listPost, addPost, delPost, getPost, updatePost } from "@/api/system/post"
 import type { SysPost, PostQueryParams } from '@/types/api/system/post'
+import type { FormInstance } from "element-plus"
 
 const { proxy } = getCurrentInstance()
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable")
@@ -160,6 +161,7 @@ const single = ref<boolean>(true)
 const multiple = ref<boolean>(true)
 const total = ref<number>(0)
 const title = ref<string>("")
+const postRef = ref<FormInstance>()
 
 const data = reactive({
   form: {} as SysPost,
@@ -247,7 +249,7 @@ function handleUpdate(row?: SysPost) {
 
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["postRef"].validate((valid: boolean) => {
+  postRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (form.value.postId != undefined) {
         updatePost(form.value).then(() => {

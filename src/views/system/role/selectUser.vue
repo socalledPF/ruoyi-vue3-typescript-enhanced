@@ -63,6 +63,7 @@
 <script setup lang="ts" name="SelectUser">
 import { authUserSelectAll, unallocatedUserList } from "@/api/system/role"
 import type { SysUser, UserQueryParams } from '@/types/api/system/user'
+import type { TableInstance } from "element-plus"
 
 const props = defineProps({
   roleId: {
@@ -77,6 +78,7 @@ const userList = ref<SysUser[]>([])
 const visible = ref<boolean>(false)
 const total = ref<number>(0)
 const userIds = ref<number[]>([])
+const refTable = ref<TableInstance>()
 
 const queryParams = reactive<UserQueryParams>({
   pageNum: 1,
@@ -95,7 +97,7 @@ function show() {
 
 /**选择行 */
 function clickRow(row: SysUser) {
-  proxy.$refs["refTable"].toggleRowSelection(row)
+  refTable.value?.toggleRowSelection(row)
 }
 
 // 多选框选中数据

@@ -53,9 +53,18 @@ const currentDate = ref<string>('')
 const passwordInput = ref<HTMLInputElement | null>(null)
 const particleCanvas = ref<HTMLCanvasElement | null>(null)
 
-let timer: any = null
-let animationId: any  = null
-let particles: any = []
+interface Particle {
+  x: number
+  y: number
+  r: number
+  dx: number
+  dy: number
+  alpha: number
+}
+
+let timer: ReturnType<typeof setInterval> | null = null
+let animationId: number | null = null
+let particles: Particle[] = []
 
 const onAvatarError = (e: Event) => {
   (e.target as HTMLImageElement).src = defAva
@@ -85,8 +94,8 @@ const handleUnlock = async () => {
     const lockPath = lockStore.lockPath
     lockStore.unlockScreen()
     router.replace(lockPath)
-  } catch (err: any) {
-    const msg = err.message || err.toString()
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
     showError(msg)
     password.value = ''
     nextTick(() => passwordInput.value?.focus())
@@ -130,7 +139,7 @@ const initParticles = () => {
 
   const draw = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    particles.forEach(p => {
+    particles.forEach((p: Particle) => {
       ctx.beginPath()
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
       ctx.fillStyle = `rgba(255,255,255,${p.alpha})`
@@ -166,8 +175,12 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  clearInterval(timer)
-  cancelAnimationFrame(animationId)
+  if (timer !== null) {
+    clearInterval(timer)
+  }
+  if (animationId !== null) {
+    cancelAnimationFrame(animationId)
+  }
 })
 </script>
 

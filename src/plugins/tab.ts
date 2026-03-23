@@ -1,40 +1,64 @@
 import useTagsViewStore from '@/store/modules/tagsView'
 import router from '@/router'
+import type { LocationQueryRaw, RouteLocationMatched, RouteLocationRaw } from 'vue-router'
+import type { View } from '@/store/modules/tagsView'
+
+interface RouteComponentWithName {
+  name?: string
+}
+
+interface TabView extends View {
+  fullPath?: string
+}
+
+function getCurrentView(): TabView {
+  return router.currentRoute.value as unknown as TabView
+}
+
+function extractRefreshTargetFromMatched(matched: RouteLocationMatched[]): TabView | undefined {
+  for (const matchedItem of matched) {
+    const components = matchedItem.components as Record<string, RouteComponentWithName> | undefined
+    const defaultComponentName = components?.default?.name
+    if (defaultComponentName && !['Layout', 'ParentView'].includes(defaultComponentName)) {
+      return {
+        name: defaultComponentName,
+        path: router.currentRoute.value.path,
+        query: router.currentRoute.value.query as Record<string, unknown>,
+        meta: router.currentRoute.value.meta as Record<string, unknown>
+      }
+    }
+  }
+  return undefined
+}
 
 export default {
-  // 刷新当前tab页签
-  refreshPage(obj?: any) {
-    const { path, query, matched } = router.currentRoute.value
-    if (obj === undefined) {
-      matched.forEach((m: any) => {
-        if (m.components && m.components.default && m.components.default.name) {
-          if (!['Layout', 'ParentView'].includes(m.components.default.name)) {
-            obj = { name: m.components.default.name, path: path, query: query }
-          }
-        }
-      })
+  refreshPage(obj?: TabView) {
+    const currentRoute = router.currentRoute.value
+    const refreshTarget = obj ?? extractRefreshTargetFromMatched(currentRoute.matched)
+    if (!refreshTarget) {
+      return Promise.resolve()
     }
-    return useTagsViewStore().delCachedView(obj).then(() => {
-      const { path, query } = obj
-      router.replace({
+    return useTagsViewStore().delCachedView(refreshTarget).then(() => {
+      const { path, query } = refreshTarget
+      return router.replace({
         path: '/redirect' + path,
-        query: query
+        query: query as LocationQueryRaw
       })
     })
   },
-  // 关闭当前tab页签，打开新页签
-  closeOpenPage(obj?: any) {
-    useTagsViewStore().delView(router.currentRoute.value)
+
+  closeOpenPage(obj?: RouteLocationRaw) {
+    useTagsViewStore().delView(getCurrentView())
     if (obj !== undefined) {
       return router.push(obj)
     }
   },
-  // 关闭指定tab页签
-  closePage(obj?: any) {
+
+  closePage(obj?: TabView) {
     if (obj === undefined) {
-      return useTagsViewStore().delView(router.currentRoute.value).then(({ visitedViews }: { visitedViews: any[] }) => {
-        const latestView = visitedViews.slice(-1)[0]
-        if (latestView) {
+      return useTagsViewStore().delView(getCurrentView()).then(({ visitedViews }: { visitedViews: View[] }) => {
+        const latestView = visitedViews.slice(-1)[0] as TabView | undefined
+        if (latestView?.fullPath) {
           return router.push(latestView.fullPath)
         }
         return router.push('/')
@@ -42,30 +66,30 @@ export default {
     }
     return useTagsViewStore().delView(obj)
   },
-  // 关闭所有tab页签
+
   closeAllPage() {
     return useTagsViewStore().delAllViews()
   },
-  // 关闭左侧tab页签
-  closeLeftPage(obj?: any) {
-    return useTagsViewStore().delLeftTags(obj || router.currentRoute.value)
+
+  closeLeftPage(obj?: TabView) {
+    return useTagsViewStore().delLeftTags(obj || getCurrentView())
   },
-  // 关闭右侧tab页签
-  closeRightPage(obj?: any) {
-    return useTagsViewStore().delRightTags(obj || router.currentRoute.value)
+
+  closeRightPage(obj?: TabView) {
+    return useTagsViewStore().delRightTags(obj || getCurrentView())
   },
-  // 关闭其他tab页签
-  closeOtherPage(obj?: any) {
-    return useTagsViewStore().delOthersViews(obj || router.currentRoute.value)
+
+  closeOtherPage(obj?: TabView) {
+    return useTagsViewStore().delOthersViews(obj || getCurrentView())
   },
-  // 打开tab页签
-  openPage(title: string, url: string, params?: any) {
-    const obj = { path: url, meta: { title: title } } as any
+
+  openPage(title: string, url: string, params?: LocationQueryRaw) {
+    const obj: TabView = { path: url, meta: { title } }
     useTagsViewStore().addView(obj)
     return router.push({ path: url, query: params })
   },
-  // 修改tab页签
-  updatePage(obj: any) {
+
+  updatePage(obj: TabView) {
     return useTagsViewStore().updateVisitedView(obj)
   }
 }

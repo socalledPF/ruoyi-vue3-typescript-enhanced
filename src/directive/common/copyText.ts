@@ -4,20 +4,27 @@
 */
 export default {
   beforeMount(el: HTMLElement, { value, arg }: DirectiveBinding) {
+    const copyEl = el as CopyTextElement
     if (arg === "callback") {
-      (el as any).$copyCallback = value
+      copyEl.$copyCallback = typeof value === 'function' ? value : undefined
     } else {
-      (el as any).$copyValue = value
+      copyEl.$copyValue = String(value ?? '')
       const handler = () => {
-        copyTextToClipboard((el as any).$copyValue)
-        if ((el as any).$copyCallback) {
-          (el as any).$copyCallback((el as any).$copyValue)
+        copyTextToClipboard(copyEl.$copyValue)
+        if (copyEl.$copyCallback) {
+          copyEl.$copyCallback(copyEl.$copyValue)
         }
       }
       el.addEventListener("click", handler)
-      ;(el as any).$destroyCopy = () => el.removeEventListener("click", handler)
+      copyEl.$destroyCopy = () => el.removeEventListener("click", handler)
     }
   }
+}
+
+interface CopyTextElement extends HTMLElement {
+  $copyCallback?: (value: string) => void
+  $copyValue: string
+  $destroyCopy?: () => void
 }
 
 function copyTextToClipboard(input: string, { target = document.body }: { target?: HTMLElement } = {}): boolean {
@@ -56,7 +63,7 @@ function copyTextToClipboard(input: string, { target = document.body }: { target
     selection.addRange(originalRange)
   }
 
-  // Get the focus back on the previously focused element, if any
+  // Get focus back on the previously focused element, if present
   if (previouslyFocusedElement) {
     previouslyFocusedElement.focus()
   }

@@ -1,6 +1,8 @@
 import request from '@/utils/request'
 import type { GenQueryParams, GenTable, GenTableInfoResult, AjaxResult, TableDataInfo } from '@/types'
 
+type GenActionParams = Record<string, string | number | boolean>
+
 // 查询生成表数据
 export function listTable(query: GenQueryParams): Promise<TableDataInfo<GenTable>> {
   return request({
@@ -37,7 +39,7 @@ export function updateGenTable(data: GenTable): Promise<AjaxResult> {
 }
 
 // 导入表
-export function importTable(data: any): Promise<AjaxResult> {
+export function importTable(data: GenActionParams): Promise<AjaxResult> {
   return request({
     url: '/tool/gen/importTable',
     method: 'post',
@@ -46,7 +48,7 @@ export function importTable(data: any): Promise<AjaxResult> {
 }
 
 // 创建表
-export function createTable(data: any): Promise<AjaxResult> {
+export function createTable(data: GenActionParams): Promise<AjaxResult> {
   return request({
     url: '/tool/gen/createTable',
     method: 'post',
@@ -55,7 +57,7 @@ export function createTable(data: any): Promise<AjaxResult> {
 }
 
 // 预览生成代码
-export function previewTable(tableId: number): Promise<AjaxResult<any>> {
+export function previewTable(tableId: number): Promise<AjaxResult<Record<string, string>>> {
   return request({
     url: '/tool/gen/preview/' + tableId,
     method: 'get'

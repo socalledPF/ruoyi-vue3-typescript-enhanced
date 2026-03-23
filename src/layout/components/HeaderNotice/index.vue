@@ -59,7 +59,13 @@ interface PopperElement extends HTMLElement {
   _noticeBound?: boolean
 }
 
-const noticePopover = ref<InstanceType<typeof import('element-plus')['ElPopover']> | null>(null)
+interface NoticePopoverRef {
+  popperRef?: {
+    contentRef?: PopperElement
+  }
+}
+
+const noticePopover = ref<NoticePopoverRef | null>(null)
 const noticeList = ref<SysNotice[]>([])
 const unreadCount = ref<number>(0)
 const noticeLoading = ref<boolean>(false)
@@ -90,7 +96,7 @@ function onNoticeEnter(): void {
   clearTimeout(noticeLeaveTimer.value ?? undefined)
   noticeVisible.value = true
   nextTick(() => {
-    const popper = (noticePopover.value as any)?.popperRef?.contentRef as PopperElement | undefined
+    const popper = noticePopover.value?.popperRef?.contentRef
     if (popper && !popper._noticeBound) {
       popper._noticeBound = true
       popper.addEventListener('mouseenter', () => clearTimeout(noticeLeaveTimer.value ?? undefined))

@@ -82,6 +82,8 @@ import { getNormalPath } from '@/utils/ruoyi'
 import { isHttp } from '@/utils/validate'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'
+import type { RouterVo } from '@/types'
+import type { FuseResult } from 'fuse.js'
 
 interface SearchItem {
   path: string
@@ -96,10 +98,15 @@ const searchPool = ref<SearchItem[]>([])
 const activeIndex = ref<number>(-1)
 const show = ref<boolean>(false)
 const fuse = ref<Fuse<SearchItem> | undefined>(undefined)
-const headerSearchSelectRef = ref<any>(null)
+const headerSearchSelectRef = ref<{ focus: () => void; blur: () => void } | null>(null)
 const router = useRouter()
 const theme = computed(() => useSettingsStore().theme)
 const routes = computed(() => usePermissionStore().defaultRoutes)
+
+interface SearchRoute extends RouterVo {
+  path: string
+  children?: SearchRoute[]
+}
 
 function click(): void {
   show.value = !show.value
@@ -152,7 +159,7 @@ function initFuse(list: SearchItem[]): void {
   })
 }
 
-function generateRoutes(routes: any, basePath = '', prefixTitle: string[] = []): SearchItem[] {
+function generateRoutes(routes: SearchRoute[], basePath = '', prefixTitle: string[] = []): SearchItem[] {
   let res: SearchItem[] = []
   for (const r of routes) {
     if (r.hidden) { continue }
@@ -189,7 +196,7 @@ function querySearch(query: string): void {
     const pathMatches = searchPool.value.filter((item: SearchItem) =>
       item.path.toLowerCase().includes(q)
     )
-    const fuseMatches = (fuse.value?.search(query) ?? []).map((item: any) => item.item as SearchItem)
+    const fuseMatches = (fuse.value?.search(query) ?? []).map((item: FuseResult<SearchItem>) => item.item)
     const merged: SearchItem[] = [...pathMatches]
     fuseMatches.forEach((item: SearchItem) => {
       if (!merged.find((m: SearchItem) => m.path === item.path)) {
@@ -237,7 +244,7 @@ function escapeRegExp(str: string): string {
 }
 
 onMounted(() => {
-  searchPool.value = generateRoutes(routes.value)
+  searchPool.value = generateRoutes(routes.value as SearchRoute[])
 })
 
 watch(searchPool, (list: SearchItem[]) => {

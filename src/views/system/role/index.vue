@@ -248,6 +248,7 @@ import type { SysRole, RoleQueryParams } from '@/types/api/system/role'
 import type { TreeSelect } from '@/types/api/common'
 import type { RoleDeptTreeResult } from '@/types/api/system/role'
 import type { RoleMenuTreeselectResult } from '@/types/api/system/menu'
+import type { FormInstance } from "element-plus"
 
 const router = useRouter()
 const { proxy } = getCurrentInstance()
@@ -272,6 +273,7 @@ const deptOptions = ref<TreeSelect[]>([])
 const openDataScope = ref<boolean>(false)
 const menuRef = ref<any | null>(null)
 const deptRef = ref<any | null>(null)
+const roleRef = ref<FormInstance>()
 
 /** 数据范围选项*/
 const dataScopeOptions = ref([
@@ -512,7 +514,7 @@ function getMenuAllCheckedKeys(): number[] {
 
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["roleRef"].validate((valid: boolean) => {
+  roleRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (form.value.roleId != undefined) {
         form.value.menuIds = getMenuAllCheckedKeys()

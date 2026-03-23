@@ -153,9 +153,10 @@
 </template>
 
 <script setup lang="ts" name="Operlog">
-import OperlogDetail from './detail'
+import OperlogDetail from './detail.vue'
 import { list, delOperlog, cleanOperlog } from "@/api/monitor/operlog"
 import type { SysOperLog, OperlogQueryParams } from '@/types/api/monitor/operlog'
+import type { TableInstance } from "element-plus"
 
 const { proxy } = getCurrentInstance()
 const { sys_oper_type, sys_common_status } = proxy.useDict("sys_oper_type", "sys_common_status")
@@ -172,6 +173,7 @@ const total = ref<number>(0)
 const title = ref<string>("")
 const dateRange = ref<string[]>([])
 const defaultSort = ref({ prop: "operTime", order: "descending" })
+const operlogRef = ref<TableInstance>()
 
 const data = reactive({
   form: {} as SysOperLog,
@@ -209,7 +211,7 @@ function resetQuery() {
   dateRange.value = []
   proxy.resetForm("queryRef")
   queryParams.value.pageNum = 1
-  proxy.$refs["operlogRef"].sort(defaultSort.value.prop, defaultSort.value.order)
+  operlogRef.value?.sort(defaultSort.value.prop, defaultSort.value.order)
 }
 
 /** 多选框选中数据 */

@@ -34,11 +34,16 @@ const activeMenu = computed(() => {
 })
 
 const visibleNumber = ref<number>(5)
+interface SidebarMenu {
+  hidden?: boolean
+  path: string
+}
+
 const topMenus = computed(() => {
-  return permissionStore.sidebarRouters.filter((f: any) => !f.hidden).slice(0, visibleNumber.value)
+  return permissionStore.sidebarRouters.filter((f: SidebarMenu) => !f.hidden).slice(0, visibleNumber.value)
 })
 const moreRoutes = computed(() => {
-  return permissionStore.sidebarRouters.filter((f: any) => !f.hidden).slice(visibleNumber.value)
+  return permissionStore.sidebarRouters.filter((f: SidebarMenu) => !f.hidden).slice(visibleNumber.value)
 })
 function setVisibleNumber(): void {
   const width = document.body.getBoundingClientRect().width / 3

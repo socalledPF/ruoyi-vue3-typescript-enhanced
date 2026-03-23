@@ -18,6 +18,7 @@
 
 <script setup lang="ts">
 import { updateUserPwd } from "@/api/system/user"
+import type { FormInstance } from "element-plus"
 
 const { proxy } = getCurrentInstance()
 
@@ -35,6 +36,7 @@ const user = reactive<UserProfilePwd>({
   newPassword: undefined,
   confirmPassword: undefined
 })
+const pwdRef = ref<FormInstance>()
 
 const equalToPassword = (rule: any, value: string, callback: (error?: Error) => void): void => {
   if (user.newPassword !== value) {
@@ -52,7 +54,7 @@ const rules = {
 
 /** 提交按钮 */
 function submit() {
-  proxy.$refs.pwdRef.validate((valid: boolean) => {
+  pwdRef.value?.validate((valid: boolean) => {
     if (valid) {
       updateUserPwd(user.oldPassword!, user.newPassword!).then(() => {
         proxy.$modal.msgSuccess("修改成功")

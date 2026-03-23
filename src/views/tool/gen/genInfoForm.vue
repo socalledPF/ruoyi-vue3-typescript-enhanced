@@ -1,5 +1,5 @@
 <template>
-  <el-form ref="genInfoForm" :model="info" :rules="rules" label-width="150px">
+  <el-form ref="genInfoFormRef" :model="info" :rules="rules" label-width="150px">
     <el-row>
       <el-col :span="12">
         <el-form-item prop="tplCategory">
@@ -237,10 +237,12 @@
 
 <script setup lang="ts">
 import { listMenu } from "@/api/system/menu"
+import type { FormInstance } from "element-plus"
 
 const subColumns = ref([])
 const menuOptions = ref([])
 const { proxy } = getCurrentInstance()
+const genInfoFormRef = ref<FormInstance>()
 
 const props = defineProps({
   info: {
@@ -288,7 +290,7 @@ function setSubTableColumns(value: string): void {
 /** 查询菜单下拉树结构 */
 function getMenuTreeselect(): void {
   listMenu().then(response => {
-    menuOptions.value = proxy.handleTree(response.data, "menuId")
+    menuOptions.value = proxy.handleTree(response.data ?? [], "menuId")
   })
 }
 
@@ -306,5 +308,9 @@ watch(() => props.info?.tplWebType, (val: string) => {
   if (val === '' && props.info) {
     props.info.tplWebType = "element-plus-typescript"
   }
+})
+
+defineExpose({
+  genInfoFormRef,
 })
 </script>

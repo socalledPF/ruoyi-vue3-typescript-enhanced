@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-dialog title="操作日志详细" v-model="dialogVisible" width="780px" append-to-body @close="$emit('update:visible', false)">
     <div class="detail-wrap">
       <!-- 基本信息 -->
@@ -140,7 +140,7 @@ function formatJson(str?: string): string {
 function copyText(str?: string): void {
   const text = formatJson(str)
   if (navigator.clipboard) {
-    navigator.clipboard.writeText(text).then(() => proxy.$modal.msgSuccess({ message: '已复制', type: 'success', duration: 1500 }))
+    navigator.clipboard.writeText(text).then(() => proxy.$modal.msgSuccess("复制成功"))
   } else {
     const ta = document.createElement('textarea')
     ta.value = text
@@ -148,7 +148,8 @@ function copyText(str?: string): void {
     ta.select()
     document.execCommand('copy')
     document.body.removeChild(ta)
-    proxy.$modal.msgSuccess({ message: '已复制', type: 'success', duration: 1500 })
+    proxy.$modal.msgSuccess("复制成功")
   }
 }
 </script>
+

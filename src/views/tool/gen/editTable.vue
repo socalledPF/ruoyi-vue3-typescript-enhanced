@@ -125,6 +125,7 @@
 import { getGenTable, updateGenTable } from "@/api/tool/gen"
 import { optionselect as getDictOptionselect } from "@/api/system/dict/type"
 import type { GenTableInfoResult } from '@/types/api/tool/gen'
+import type { FormInstance } from "element-plus"
 import BasicInfoForm from "./basicInfoForm.vue"
 import GenInfoForm from "./genInfoForm.vue"
 import Sortable from 'sortablejs'
@@ -138,11 +139,19 @@ const tables = ref<any[]>([])
 const columns = ref<any[]>([])
 const dictOptions = ref<any[]>([])
 const info = ref<Record<string, any>>({})
+interface BasicInfoExpose {
+  basicInfoFormRef: FormInstance | undefined
+}
+interface GenInfoExpose {
+  genInfoFormRef: FormInstance | undefined
+}
+const basicInfo = ref<BasicInfoExpose>()
+const genInfo = ref<GenInfoExpose>()
 
 /** 提交按钮 */
 function submitForm(): void {
-  const basicForm = proxy.$refs.basicInfo.$refs.basicInfoForm
-  const genForm = proxy.$refs.genInfo.$refs.genInfoForm
+  const basicForm = basicInfo.value?.basicInfoFormRef
+  const genForm = genInfo.value?.genInfoFormRef
   Promise.all([basicForm, genForm].map(getFormPromise)).then(res => {
     const validateResult = res.every(item => !!item)
     if (validateResult) {
@@ -166,8 +175,12 @@ function submitForm(): void {
   })
 }
 
-function getFormPromise(form: any): Promise<boolean> {
+function getFormPromise(form: FormInstance | undefined): Promise<boolean> {
   return new Promise(resolve => {
+    if (!form) {
+      resolve(false)
+      return
+    }
     form.validate((res: boolean) => {
       resolve(res)
     })

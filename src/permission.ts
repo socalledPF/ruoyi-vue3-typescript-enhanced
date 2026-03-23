@@ -9,6 +9,7 @@ import useUserStore from '@/store/modules/user'
 import useLockStore from '@/store/modules/lock'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'
+import type { RouteRecordRaw } from 'vue-router'
 
 NProgress.configure({ showSpinner: false })
 
@@ -41,18 +42,18 @@ router.beforeEach((to, from, next) => {
         // 判断当前用户是否已拉取完user_info信息
         useUserStore().getInfo().then(() => {
           isRelogin.show = false
-          usePermissionStore().generateRoutes().then((accessRoutes: any[]) => {
+          usePermissionStore().generateRoutes().then((accessRoutes: RouteRecordRaw[]) => {
             // 根据roles权限生成可访问的路由表
-            accessRoutes.forEach((route: any) => {
+            accessRoutes.forEach((route) => {
               if (!isHttp(route.path)) {
                 router.addRoute(route) // 动态添加可访问路由表
               }
             })
             next({ ...to, replace: true }) // hack方法 确保addRoutes已完成
           })
-        }).catch((err: any) => {
+        }).catch((err: unknown) => {
           useUserStore().logOut().then(() => {
-            ElMessage.error(err as string)
+            ElMessage.error(err instanceof Error ? err.message : String(err))
             next({ path: '/' })
           })
         })

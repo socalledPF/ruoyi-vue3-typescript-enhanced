@@ -65,7 +65,7 @@ export default defineConfig(({ mode, command }) => {
           {
             postcssPlugin: 'internal:charset-removal',
             AtRule: {
-              charset: (atRule: any) => {
+              charset: (atRule: { name?: string; remove: () => void }) => {
                 if (atRule.name === 'charset') {
                   atRule.remove()
                 }

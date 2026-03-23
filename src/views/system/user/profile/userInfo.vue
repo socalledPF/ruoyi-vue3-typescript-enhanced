@@ -25,6 +25,7 @@
 <script setup lang="ts">
 import { updateUserProfile } from "@/api/system/user"
 import type { SysUser } from '@/types/api/system/user'
+import type { FormInstance } from "element-plus"
 
 interface Props {
   user?: SysUser
@@ -35,6 +36,7 @@ const props = defineProps<Props>()
 const { proxy } = getCurrentInstance()
 
 const form = ref<SysUser>({})
+const userRef = ref<FormInstance>()
 const rules = {
   nickName: [{ required: true, message: "用户昵称不能为空", trigger: "blur" }],
   email: [{ required: true, message: "邮箱地址不能为空", trigger: "blur" }, { type: "email", message: "请输入正确的邮箱地址", trigger: ["blur", "change"] }],
@@ -43,7 +45,7 @@ const rules = {
 
 /** 提交按钮 */
 function submit() {
-  proxy.$refs.userRef.validate((valid: boolean) => {
+  userRef.value?.validate((valid: boolean) => {
     if (valid) {
       updateUserProfile(form.value).then(() => {
         proxy.$modal.msgSuccess("修改成功")

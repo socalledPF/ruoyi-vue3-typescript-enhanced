@@ -45,10 +45,10 @@ const useSettingsStore = defineStore(
     }),
     actions: {
       // 修改布局设置
-      changeSetting(data: { key: string; value: any }) {
+      changeSetting<K extends keyof SettingsState>(data: { key: K; value: SettingsState[K] }) {
         const { key, value } = data
-        if (this.hasOwnProperty(key)) {
-          (this as any)[key] = value
+        if (key in this) {
+          this[key] = value
         }
       },
       // 设置网页标题

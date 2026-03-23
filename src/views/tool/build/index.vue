@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="container">
     <div class="left-board">
       <div class="logo-wrapper">
@@ -144,7 +144,7 @@ function download(): void {
   operationType.value = 'download'
 }
 function empty(): void {
-  proxy.$modal.confirm('确定要清空所有组件吗？', '提示', { type: 'warning' }).then(() => {
+  proxy.$modal.confirm("确定要清空所有组件吗？").then(() => {
     idGlobal.value = 100
     drawingList.value = []
     cleanDrawingDefaultValue()

@@ -306,6 +306,7 @@ import { addMenu, delMenu, getMenu, listMenu, updateMenu, updateMenuSort, } from
 import SvgIcon from "@/components/SvgIcon/index.vue"
 import IconSelect from "@/components/IconSelect/index.vue"
 import type { SysMenu, MenuQueryParams } from '@/types/api/system/menu'
+import type { FormInstance } from "element-plus"
 
 const { proxy } = getCurrentInstance()
 const { sys_show_hide, sys_normal_disable } = proxy.useDict("sys_show_hide", "sys_normal_disable")
@@ -320,6 +321,7 @@ const isExpandAll = ref<boolean>(false)
 const refreshTable = ref<boolean>(true)
 const iconSelectRef = ref<any | null>(null)
 const originalOrders = ref<Record<number, number>>({})
+const menuRef = ref<FormInstance>()
 
 const data = reactive({
   form: {} as SysMenu,
@@ -340,7 +342,7 @@ const { queryParams, form, rules } = toRefs(data)
 function getList() {
   loading.value = true
   listMenu(queryParams.value).then(response => {
-    menuList.value = proxy.handleTree(response.data, "menuId")
+    menuList.value = proxy.handleTree(response.data ?? [], "menuId")
     recordOriginalOrders(menuList.value)
     loading.value = false
   })
@@ -350,8 +352,12 @@ function getList() {
 function getTreeselect() {
   menuOptions.value = []
   listMenu().then(response => {
-    const menu = { menuId: 0, menuName: "主类目", children: [] }
-    menu.children = proxy.handleTree(response.data, "menuId")
+    const menu = {
+      menuId: 0,
+      menuName: "主类目",
+      children: [] as SysMenu[],
+    }
+    menu.children = proxy.handleTree(response.data ?? [], "menuId")
     menuOptions.value.push(menu)
   })
 }
@@ -435,7 +441,7 @@ async function handleUpdate(row: SysMenu) {
 
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["menuRef"].validate((valid: boolean) => {
+  menuRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (form.value.menuId != undefined) {
         updateMenu(form.value).then(() => {

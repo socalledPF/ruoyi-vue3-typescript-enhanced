@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-breadcrumb class="app-breadcrumb" separator="/">
     <transition-group name="breadcrumb">
       <el-breadcrumb-item v-for="(item, index) in levelList" :key="item.path">
@@ -11,15 +11,24 @@
 
 <script setup lang="ts">
 import usePermissionStore from '@/store/modules/permission'
+import type { RouteLocationMatched } from 'vue-router'
+
+interface BreadcrumbItem {
+  path: string
+  name?: string | symbol
+  redirect?: string
+  meta?: Record<string, unknown>
+  children?: BreadcrumbItem[]
+}
 
 const route = useRoute()
 const router = useRouter()
 const permissionStore = usePermissionStore()
-const levelList = ref<any[]>([])
+const levelList = ref<BreadcrumbItem[]>([])
 
 function getBreadcrumb(): void {
   // only show routes with meta.title
-  let matched: any[] = []
+  let matched: BreadcrumbItem[] = []
   const pathNum = findPathNum(route.path)
   // multi-level menu
   if (pathNum > 2) {
@@ -28,13 +37,13 @@ function getBreadcrumb(): void {
       if (index !== 0) item = item.slice(1)
       return item
     }) || []
-    getMatched(pathList, permissionStore.defaultRoutes, matched)
+    getMatched(pathList, permissionStore.defaultRoutes as BreadcrumbItem[], matched)
   } else {
-    matched = route.matched.filter((item: any) => item.meta && item.meta.title)
+    matched = route.matched.filter((item: RouteLocationMatched) => item.meta && item.meta.title) as unknown as BreadcrumbItem[]
   }
-  // 判断是否为首页
+  // 鍒ゆ柇鏄惁涓洪椤?
   if (!isDashboard(matched[0])) {
-    matched = [{ path: "/index", meta: { title: "首页" } }].concat(matched)
+    matched = [{ path: "/index", meta: { title: "棣栭〉" } }, ...matched]
   }
   levelList.value = matched.filter(item => item.meta && item.meta.title && (item.meta.breadcrumb as boolean) !== false)
 }
@@ -47,8 +56,8 @@ function findPathNum(str: string, char = "/"): number {
   }
   return num
 }
-function getMatched(pathList: string[], routeList: any[], matched: any[]): void {
-  let data = routeList.find(item => item.path == pathList[0] || (item.name + '').toLowerCase() == pathList[0])
+function getMatched(pathList: string[], routeList: BreadcrumbItem[], matched: BreadcrumbItem[]): void {
+  let data = routeList.find((item: BreadcrumbItem) => item.path == pathList[0] || String(item.name || '').toLowerCase() == pathList[0])
   if (data) {
     matched.push(data)
     if (data.children && pathList.length) {
@@ -57,14 +66,14 @@ function getMatched(pathList: string[], routeList: any[], matched: any[]): void 
     }
   }
 }
-function isDashboard(route?: any): boolean {
+function isDashboard(route?: BreadcrumbItem): boolean {
   const name = route && route.name
   if (!name) {
     return false
   }
   return String(name).trim() === 'Index'
 }
-function handleLink(item: any): void {
+function handleLink(item: BreadcrumbItem): void {
   const { redirect, path } = item
   if (redirect) {
     router.push(redirect as string)
@@ -95,3 +104,6 @@ getBreadcrumb()
   }
 }
 </style>
+
+
+

@@ -106,6 +106,10 @@ const showSearch = ref<boolean>(true)
 const multiple = ref<boolean>(true)
 const total = ref<number>(0)
 const userIds = ref<number[]>([])
+interface SelectUserInstance {
+  show: () => void
+}
+const selectRef = ref<SelectUserInstance>()
 
 const queryParams = reactive<AuthUserQueryParams>({
   pageNum: 1,
@@ -151,7 +155,7 @@ function handleSelectionChange(selection: SysUser[]) {
 
 /** 打开授权用户表弹窗 */
 function openSelectUser() {
-  proxy.$refs["selectRef"].show()
+  selectRef.value?.show()
 }
 
 /** 取消授权按钮操作 */

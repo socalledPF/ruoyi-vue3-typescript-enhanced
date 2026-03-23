@@ -150,9 +150,13 @@ import { listTable, previewTable, delTable, genCode, synchDb } from "@/api/tool/
 import importTable from "./importTable.vue"
 import createTable from "./createTable.vue"
 import type { GenTable, GenQueryParams } from '@/types/api/tool/gen'
+import type { TableInstance } from "element-plus"
 
 const route = useRoute()
 const { proxy } = getCurrentInstance()
+interface DialogExpose {
+  show: () => void
+}
 
 const tableList = ref<GenTable[]>([])
 const loading = ref<boolean>(true)
@@ -165,6 +169,9 @@ const tableNames = ref<string[]>([])
 const dateRange = ref<string[]>([])
 const uniqueId = ref<string>("")
 const defaultSort = ref({ prop: "createTime", order: "descending" })
+const genRef = ref<TableInstance>()
+const importRef = ref<DialogExpose>()
+const createRef = ref<DialogExpose>()
 
 const data = reactive({
   queryParams: {
@@ -241,12 +248,12 @@ function handleSynchDb(row: GenTable) {
 
 /** 打开导入表弹窗 */
 function openImportTable() {
-  proxy.$refs["importRef"].show()
+  importRef.value?.show()
 }
 
 /** 打开创建表弹窗 */
 function openCreateTable() {
-  proxy.$refs["createRef"].show()
+  createRef.value?.show()
 }
 
 /** 重置按钮操作 */
@@ -254,7 +261,7 @@ function resetQuery() {
   dateRange.value = []
   proxy.resetForm("queryRef")
   queryParams.value.pageNum = 1
-  proxy.$refs["genRef"].sort(defaultSort.value.prop, defaultSort.value.order)
+  genRef.value?.sort(defaultSort.value.prop, defaultSort.value.order)
 }
 
 /** 预览按钮 */

@@ -4,9 +4,11 @@ import { saveAs } from 'file-saver'
 import { getToken } from '@/utils/auth'
 import errorCode from '@/utils/errorCode'
 import { blobValidate } from '@/utils/ruoyi'
+import type { AxiosResponse } from 'axios'
 
 const baseURL = import.meta.env.VITE_APP_BASE_API
 let downloadLoadingInstance: ReturnType<typeof ElLoading.service>
+type DownloadResponse = AxiosResponse<Blob>
 
 export default {
   name(name: string, isDelete = true) {
@@ -16,7 +18,7 @@ export default {
       url: url,
       responseType: 'blob',
       headers: { 'Authorization': 'Bearer ' + getToken() }
-    }).then((res: any) => {
+    }).then((res: DownloadResponse) => {
       const isBlob = blobValidate(res.data)
       if (isBlob) {
         const blob = new Blob([res.data])
@@ -33,7 +35,7 @@ export default {
       url: url,
       responseType: 'blob',
       headers: { 'Authorization': 'Bearer ' + getToken() }
-    }).then((res: any) => {
+    }).then((res: DownloadResponse) => {
       const isBlob = blobValidate(res.data)
       if (isBlob) {
         const blob = new Blob([res.data])
@@ -51,7 +53,7 @@ export default {
       url: downloadUrl,
       responseType: 'blob',
       headers: { 'Authorization': 'Bearer ' + getToken() }
-    }).then((res: any) => {
+    }).then((res: DownloadResponse) => {
       const isBlob = blobValidate(res.data)
       if (isBlob) {
         const blob = new Blob([res.data], { type: 'application/zip' })
@@ -60,19 +62,20 @@ export default {
         this.printErrMsg(res.data)
       }
       downloadLoadingInstance.close()
-    }).catch((r: any) => {
-      console.error(r)
+    }).catch((error: unknown) => {
+      console.error(error)
       ElMessage.error('下载文件出现错误，请联系管理员！')
       downloadLoadingInstance.close()
     })
   },
-  saveAs(text: Blob, name: string, opts?: any) {
+  saveAs(text: Blob, name: string, opts?: unknown) {
     saveAs(text, name, opts)
   },
-  async printErrMsg(data: any) {
+  async printErrMsg(data: Blob) {
     const resText = await data.text()
-    const rspObj = JSON.parse(resText)
-    const errMsg = errorCode[rspObj.code] || rspObj.msg || errorCode['default']
+    const rspObj = JSON.parse(resText) as { code?: string | number; msg?: string }
+    const code = String(rspObj.code ?? 'default')
+    const errMsg = errorCode[code] || rspObj.msg || errorCode['default']
     ElMessage.error(errMsg)
   }
 }

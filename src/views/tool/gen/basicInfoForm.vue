@@ -1,5 +1,5 @@
 <template>
-  <el-form ref="basicInfoForm" :model="info" :rules="rules" label-width="150px">
+  <el-form ref="basicInfoFormRef" :model="info" :rules="rules" label-width="150px">
     <el-row>
       <el-col :span="12">
         <el-form-item label="表名称" prop="tableName">
@@ -31,12 +31,15 @@
 </template>
 
 <script setup lang="ts">
+import type { FormInstance } from "element-plus"
+
 defineProps({
   info: {
     type: Object,
     default: null
   }
 })
+const basicInfoFormRef = ref<FormInstance>()
 
 // 表单校验
 const rules = ref({
@@ -44,5 +47,9 @@ const rules = ref({
   tableComment: [{ required: true, message: "请输入表描述", trigger: "blur" }],
   className: [{ required: true, message: "请输入实体类名称", trigger: "blur" }],
   functionAuthor: [{ required: true, message: "请输入作者", trigger: "blur" }]
+})
+
+defineExpose({
+  basicInfoFormRef,
 })
 </script>

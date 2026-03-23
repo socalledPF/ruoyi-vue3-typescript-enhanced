@@ -6,26 +6,28 @@
     :ellipsis="false"
   >
     <template v-for="(item, index) in topMenus">
-      <el-menu-item :style="{'--theme': theme}" :index="item.path" :key="index" v-if="index < visibleNumber">
+      <el-menu-item :style="{ '--theme': theme }" :index="item.path" :key="index" v-if="index < visibleNumber">
         <svg-icon
-        v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
-        :icon-class="item.meta.icon"/>
-        {{ item.meta.title }}
+          v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
+          :icon-class="item.meta.icon"
+        />
+        {{ item.meta?.title }}
       </el-menu-item>
     </template>
 
-    <!-- 顶部菜单超出数量折叠 -->
-    <el-sub-menu :style="{'--theme': theme}" index="more" v-if="topMenus.length > visibleNumber">
+    <el-sub-menu :style="{ '--theme': theme }" index="more" v-if="topMenus.length > visibleNumber">
       <template #title>更多菜单</template>
       <template v-for="(item, index) in topMenus">
         <el-menu-item
           :index="item.path"
           :key="index"
-          v-if="index >= visibleNumber">
-        <svg-icon
-          v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
-          :icon-class="item.meta.icon"/>
-        {{ item.meta.title }}
+          v-if="index >= visibleNumber"
+        >
+          <svg-icon
+            v-if="item.meta && item.meta.icon && item.meta.icon !== '#'"
+            :icon-class="item.meta.icon"
+          />
+          {{ item.meta?.title }}
         </el-menu-item>
       </template>
     </el-sub-menu>
@@ -38,12 +40,19 @@ import { isHttp } from '@/utils/validate'
 import useAppStore from '@/store/modules/app'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'
+import type { LocationQueryRaw, RouteLocationNormalizedLoaded } from 'vue-router'
+import type { MetaVo, RouterVo } from '@/types'
 
-// 顶部栏初始数
+interface TopMenuItem extends RouterVo {
+  path: string
+  meta?: MetaVo
+  query?: string
+  children?: TopMenuItem[]
+  parentPath?: string
+}
+
 const visibleNumber = ref<number | null>(null)
-// 当前激活菜单的 index
 const currentIndex = ref<string | null>(null)
-// 隐藏侧边栏路由
 const hideList = ['/index', '/user/profile']
 
 const appStore = useAppStore()
@@ -52,49 +61,42 @@ const permissionStore = usePermissionStore()
 const route = useRoute()
 const router = useRouter()
 
-// 主题颜色
 const theme = computed(() => settingsStore.theme)
-// 所有的路由信息
-const routers = computed(() => permissionStore.topbarRouters)
+const routers = computed<TopMenuItem[]>(() => permissionStore.topbarRouters as TopMenuItem[])
 
-// 顶部显示菜单
-const topMenus = computed(() => {
-  const topMenus: any[] = []
-  routers.value.map((menu: any) => {
+const topMenus = computed<TopMenuItem[]>(() => {
+  const menuItems: TopMenuItem[] = []
+  routers.value.forEach((menu: TopMenuItem) => {
     if (menu.hidden !== true) {
-      // 兼容顶部栏一级菜单内部跳转
-      if (menu.path === '/' && menu.children) {
-          topMenus.push(menu.children[0])
+      if (menu.path === '/' && menu.children && menu.children.length > 0) {
+        menuItems.push(menu.children[0])
       } else {
-          topMenus.push(menu)
+        menuItems.push(menu)
       }
     }
   })
-  return topMenus
+  return menuItems
 })
 
-// 设置子路由
-const childrenMenus = computed(() => {
-  const childrenMenus: any[] = []
-  routers.value.map((router: any) => {
-    for (const item in router.children) {
-      if (router.children[item].parentPath === undefined) {
-        if(router.path === "/") {
-          router.children[item].path = "/" + router.children[item].path
-        } else {
-          if(!isHttp(router.children[item].path)) {
-            router.children[item].path = router.path + "/" + router.children[item].path
-          }
+const childrenMenus = computed<TopMenuItem[]>(() => {
+  const menuItems: TopMenuItem[] = []
+  routers.value.forEach((parentRoute: TopMenuItem) => {
+    const children = parentRoute.children ?? []
+    children.forEach((childRoute: TopMenuItem) => {
+      if (childRoute.parentPath === undefined) {
+        if (parentRoute.path === '/') {
+          childRoute.path = `/${childRoute.path}`
+        } else if (!isHttp(childRoute.path)) {
+          childRoute.path = `${parentRoute.path}/${childRoute.path}`
         }
-        router.children[item].parentPath = router.path
+        childRoute.parentPath = parentRoute.path
       }
-      childrenMenus.push(router.children[item])
-    }
+      menuItems.push(childRoute)
+    })
   })
-  return constantRoutes.concat(childrenMenus)
+  return [...(constantRoutes as unknown as TopMenuItem[]), ...menuItems]
 })
 
-// 默认激活的菜单
 const activeMenu = computed(() => {
   const path = route.path
   let activePath = path
@@ -104,7 +106,7 @@ const activeMenu = computed(() => {
       activePath = "/" + tmpPath.substring(0, tmpPath.indexOf("/"))
       appStore.toggleSideBarHide(false)
     }
-  } else if(!(route as any).children) {
+  } else if (!((route as RouteLocationNormalizedLoaded & { children?: TopMenuItem[] }).children)) {
     activePath = path
     appStore.toggleSideBarHide(true)
   }
@@ -118,38 +120,36 @@ function setVisibleNumber(): void {
 }
 
 function handleSelect(key: string, keyPath: string[]): void {
+  void keyPath
   currentIndex.value = key
-  const route = routers.value.find((item: any) => item.path === key)
+  const matchedRoute = routers.value.find((item: TopMenuItem) => item.path === key)
   if (isHttp(key)) {
-    // http(s):// 路径新窗口打开
     window.open(key, "_blank")
-  } else if (!route || !route.children) {
-    // 没有子路由路径内部打开
-    const routeMenu = childrenMenus.value.find((item: any) => item.path === key)
-    if (routeMenu && routeMenu.query) {
-      const query = JSON.parse(routeMenu.query)
-      router.push({ path: key, query: query })
+  } else if (!matchedRoute || !matchedRoute.children) {
+    const routeMenu = childrenMenus.value.find((item: TopMenuItem) => item.path === key)
+    if (routeMenu && typeof routeMenu.query === "string" && routeMenu.query.length > 0) {
+      const query = JSON.parse(routeMenu.query) as LocationQueryRaw
+      router.push({ path: key, query })
     } else {
       router.push({ path: key })
     }
     appStore.toggleSideBarHide(true)
   } else {
-    // 显示左侧联动菜单
     activeRoutes(key)
     appStore.toggleSideBarHide(false)
   }
 }
 
-function activeRoutes(key: string){
-  const routes: any[] = []
-  if (childrenMenus.value && childrenMenus.value.length > 0) {
-    childrenMenus.value.map((item: any) => {
-      if (key == item.parentPath || (key == "index" && "" == item.path)) {
+function activeRoutes(key: string): TopMenuItem[] {
+  const routes: TopMenuItem[] = []
+  if (childrenMenus.value.length > 0) {
+    childrenMenus.value.forEach((item: TopMenuItem) => {
+      if (key === item.parentPath || (key === "index" && item.path === "")) {
         routes.push(item)
       }
     })
   }
-  if(routes.length > 0) {
+  if (routes.length > 0) {
     permissionStore.setSidebarRouters(routes)
   } else {
     appStore.toggleSideBarHide(true)
@@ -159,14 +159,11 @@ function activeRoutes(key: string){
 
 onMounted(() => {
   window.addEventListener('resize', setVisibleNumber)
+  setVisibleNumber()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', setVisibleNumber)
-})
-
-onMounted(() => {
-  setVisibleNumber()
 })
 </script>
 
@@ -185,7 +182,6 @@ onMounted(() => {
   color: #303133;
 }
 
-/* sub-menu item */
 .topmenu-container.el-menu--horizontal > .el-sub-menu .el-sub-menu__title {
   float: left;
   height: 50px !important;
@@ -195,21 +191,20 @@ onMounted(() => {
   margin: 0 10px !important;
 }
 
-/* 背景色隐藏 */
-.topmenu-container.el-menu--horizontal>.el-menu-item:not(.is-disabled):focus, .topmenu-container.el-menu--horizontal>.el-menu-item:not(.is-disabled):hover, .topmenu-container.el-menu--horizontal>.el-submenu .el-submenu__title:hover {
+.topmenu-container.el-menu--horizontal > .el-menu-item:not(.is-disabled):focus,
+.topmenu-container.el-menu--horizontal > .el-menu-item:not(.is-disabled):hover,
+.topmenu-container.el-menu--horizontal > .el-submenu .el-submenu__title:hover {
   background-color: #ffffff;
 }
 
-/* 图标右间距 */
 .topmenu-container .svg-icon {
   margin-right: 4px;
 }
 
-/* topmenu more arrow */
 .topmenu-container .el-sub-menu .el-sub-menu__icon-arrow {
   position: static;
   vertical-align: middle;
   margin-left: 8px;
-  margin-top: 0px;
+  margin-top: 0;
 }
 </style>

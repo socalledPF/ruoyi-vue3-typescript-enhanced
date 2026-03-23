@@ -167,6 +167,7 @@
 <script setup lang="ts" name="Config">
 import type { SysConfig, ConfigQueryParams } from '@/types/api/system/config'
 import { listConfig, getConfig, delConfig, addConfig, updateConfig, refreshCache } from "@/api/system/config"
+import type { FormInstance } from "element-plus"
 
 const { proxy } = getCurrentInstance()
 const { sys_yes_no } = proxy.useDict("sys_yes_no")
@@ -181,6 +182,7 @@ const multiple = ref<boolean>(true)
 const total = ref<number>(0)
 const title = ref<string>("")
 const dateRange = ref<string[]>([])
+const configRef = ref<FormInstance>()
 
 const data = reactive({
   form: {} as SysConfig,
@@ -269,7 +271,7 @@ function handleUpdate(row: SysConfig) {
 
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["configRef"].validate((valid: boolean) => {
+  configRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (form.value.configId != undefined) {
         updateConfig(form.value).then(() => {

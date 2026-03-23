@@ -127,6 +127,7 @@
 <script setup lang="ts" name="Logininfor">
 import { list, delLogininfor, cleanLogininfor, unlockLogininfor } from "@/api/monitor/logininfor"
 import type { SysLogininfor, LogininforQueryParams } from '@/types/api/monitor/logininfor'
+import type { TableInstance } from "element-plus"
 
 const { proxy } = getCurrentInstance()
 const { sys_common_status } = proxy.useDict("sys_common_status")
@@ -141,6 +142,7 @@ const selectName = ref<string[]>([])
 const total = ref<number>(0)
 const dateRange = ref<string[]>([])
 const defaultSort = ref({ prop: "loginTime", order: "descending" })
+const logininforRef = ref<TableInstance>()
 
 // 查询参数
 const queryParams = ref<LogininforQueryParams>({
@@ -174,7 +176,7 @@ function resetQuery() {
   dateRange.value = []
   proxy.resetForm("queryRef")
   queryParams.value.pageNum = 1
-  proxy.$refs["logininforRef"].sort(defaultSort.value.prop, defaultSort.value.order)
+  logininforRef.value?.sort(defaultSort.value.prop, defaultSort.value.order)
 }
 
 /** 多选框选中数据 */

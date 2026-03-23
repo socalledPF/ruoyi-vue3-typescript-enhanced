@@ -80,7 +80,7 @@ import useAppStore from '@/store/modules/app'
 import useUserStore from '@/store/modules/user'
 import useLockStore from '@/store/modules/lock'
 import useSettingsStore from '@/store/modules/settings'
-import HeaderNotice from './HeaderNotice'
+import HeaderNotice from './HeaderNotice/index.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -88,6 +88,15 @@ const appStore = useAppStore()
 const userStore = useUserStore()
 const lockStore = useLockStore()
 const settingsStore = useSettingsStore()
+
+type ViewTransitionLike = {
+  ready: Promise<void>
+  finished: Promise<void>
+}
+
+type TransitionDocument = Document & {
+  startViewTransition?: (callback: () => Promise<void> | void) => ViewTransitionLike
+}
 
 function toggleSideBar(): void {
   appStore.toggleSideBar()
@@ -133,12 +142,13 @@ function lockScreen() {
 }
 
 async function toggleTheme(event?: MouseEvent): Promise<void> {
+  const transitionDocument = document as TransitionDocument
   const x = event?.clientX || window.innerWidth / 2
   const y = event?.clientY || window.innerHeight / 2
   const wasDark = settingsStore.isDark
 
   const isReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  const isSupported = typeof (document as any).startViewTransition === 'function' && !isReducedMotion
+  const isSupported = typeof transitionDocument.startViewTransition === 'function' && !isReducedMotion
 
   if (!isSupported) {
     settingsStore.toggleTheme()
@@ -146,7 +156,7 @@ async function toggleTheme(event?: MouseEvent): Promise<void> {
   }
 
   try {
-    const transition = document.startViewTransition(async () => {
+    const transition = transitionDocument.startViewTransition!(async () => {
       await new Promise((resolve) => setTimeout(resolve, 10))
       settingsStore.toggleTheme()
       await nextTick()

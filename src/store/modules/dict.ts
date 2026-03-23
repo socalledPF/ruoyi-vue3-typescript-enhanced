@@ -1,6 +1,6 @@
 interface DictItem {
   key: string
-  value: any[]
+  value: unknown[]
 }
 
 interface DictState {
@@ -15,7 +15,7 @@ const useDictStore = defineStore(
     }),
     actions: {
       // 获取字典
-      getDict(_key: string): any[] | null {
+      getDict(_key: string): unknown[] | null {
         if (_key == null && _key == "") {
           return null
         }
@@ -31,7 +31,7 @@ const useDictStore = defineStore(
         return null
       },
       // 设置字典
-      setDict(_key: string, value: any[]) {
+      setDict(_key: string, value: unknown[]) {
         if (_key !== null && _key !== "") {
           this.dict.push({
             key: _key,

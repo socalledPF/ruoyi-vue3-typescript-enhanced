@@ -157,6 +157,7 @@
 import { listDept, getDept, delDept, addDept, updateDept, updateDeptSort, listDeptExcludeChild } from "@/api/system/dept"
 import type { SysDept, DeptQueryParams } from '@/types/api/system/dept'
 import type { TreeSelect } from '@/types/api/common'
+import type { FormInstance } from "element-plus"
 
 const { proxy } = getCurrentInstance()
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable")
@@ -170,6 +171,7 @@ const deptOptions = ref<TreeSelect[]>([])
 const isExpandAll = ref<boolean>(true)
 const refreshTable = ref<boolean>(true)
 const originalOrders = ref<Record<number, number>>({})
+const deptRef = ref<FormInstance>()
 
 const data = reactive({
   form: {} as SysDept,
@@ -192,7 +194,7 @@ const { queryParams, form, rules } = toRefs(data)
 function getList() {
   loading.value = true
   listDept(queryParams.value).then(response => {
-    deptList.value = proxy.handleTree(response.data, "deptId")
+    deptList.value = proxy.handleTree(response.data ?? [], "deptId")
     recordOriginalOrders(deptList.value)
     loading.value = false
   })
@@ -234,7 +236,7 @@ function resetQuery() {
 function handleAdd(row?: SysDept) {
   reset()
   listDept().then(response => {
-    deptOptions.value = proxy.handleTree(response.data, "deptId")
+    deptOptions.value = proxy.handleTree(response.data ?? [], "deptId")
   })
   if (row != undefined) {
     form.value.parentId = row.deptId
@@ -256,7 +258,7 @@ function toggleExpandAll() {
 function handleUpdate(row: SysDept) {
   reset()
   listDeptExcludeChild(row.deptId!).then(response => {
-    deptOptions.value = proxy.handleTree(response.data, "deptId")
+    deptOptions.value = proxy.handleTree(response.data ?? [], "deptId")
   })
   getDept(row.deptId!).then(response => {
     form.value = response.data!
@@ -267,7 +269,7 @@ function handleUpdate(row: SysDept) {
 
 /** 提交按钮 */
 function submitForm() {
-  proxy.$refs["deptRef"].validate((valid: boolean) => {
+  deptRef.value?.validate((valid: boolean) => {
     if (valid) {
       if (form.value.deptId != undefined) {
         updateDept(form.value).then(() => {

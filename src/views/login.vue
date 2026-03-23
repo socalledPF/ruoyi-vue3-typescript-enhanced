@@ -70,6 +70,7 @@ import Cookies from "js-cookie"
 import { encrypt, decrypt } from "@/utils/jsencrypt"
 import useUserStore from '@/store/modules/user'
 import defaultSettings from '@/settings'
+import type { FormInstance } from "element-plus"
 import type { CaptchaInfoResult } from '@/types/api/login'
 import type { LoginForm } from '@/types/api/login'
 
@@ -96,6 +97,7 @@ const loginRules = {
 
 const codeUrl = ref("")
 const loading = ref(false)
+const loginRef = ref<FormInstance>()
 // 验证码开关
 const captchaEnabled = ref(true)
 // 注册开关
@@ -107,7 +109,7 @@ watch(route, (newRoute: any) => {
 }, { immediate: true })
 
 function handleLogin(): void {
-  proxy.$refs.loginRef.validate((valid: boolean) => {
+  loginRef.value?.validate((valid: boolean) => {
     if (valid) {
       loading.value = true
       // 勾选了需要记住密码设置在 cookie 中设置记住用户名和密码
