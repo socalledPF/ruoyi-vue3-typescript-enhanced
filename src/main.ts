@@ -44,6 +44,7 @@ import RightToolbar from "@/components/RightToolbar/index.vue";
 import Editor from "@/components/Editor/index.vue";
 // 文件上传组件
 import FileUpload from "@/components/FileUpload/index.vue";
+import QueryForm from "@/components/QueryForm/index.vue";
 // 图片上传组件
 import ImageUpload from "@/components/ImageUpload/index.vue";
 // 图片预览组件
@@ -69,6 +70,7 @@ app.config.globalProperties.selectDictLabels = selectDictLabels;
 app.component("DictTag", DictTag);
 app.component("Pagination", Pagination);
 app.component("ProTable", ProTable);
+app.component("QueryForm", QueryForm);
 app.component("FileUpload", FileUpload);
 app.component("ImageUpload", ImageUpload);
 app.component("ImagePreview", ImagePreview);

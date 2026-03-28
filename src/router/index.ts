@@ -102,6 +102,12 @@ export const constantRoutes = [
         name: "ProTableDemo",
         meta: { title: "测试", icon: "test" },
       },
+      {
+        path: "tsx",
+        component: () => import("@/views/test/tsx"),
+        name: "TsxDemo",
+        meta: { title: "TSX Demo", icon: "test" },
+      },
     ],
   },
 ];

@@ -28,72 +28,35 @@
     </section>
 
     <section class="demo-toolbar">
-      <div class="demo-toolbar__filters">
-        <el-input
-          v-model="search"
-          clearable
-          placeholder="Search workspace, owner, or department"
-        />
-        <el-select v-model="statusFilter" style="width: 180px">
-          <el-option label="All states" value="All" />
-          <el-option label="Live" value="Live" />
-          <el-option label="Watch" value="Watch" />
-          <el-option label="Draft" value="Draft" />
-        </el-select>
-        <el-switch
-          v-model="highRiskOnly"
-          active-text="Critical only"
-          inactive-text="All risk"
-        />
-        <el-switch
-          v-model="showBudget"
-          active-text="Budget column"
-          inactive-text="Hide budget"
-        />
-        <el-switch
-          v-model="showReview"
-          active-text="Review date"
-          inactive-text="Hide review"
-        />
-        <el-switch
-          v-model="striped"
-          active-text="Striped"
-          inactive-text="Flat"
-        />
-      </div>
-
-      <div class="demo-toolbar__actions">
-        <el-button type="primary" @click="sortByHealth">Sort Health</el-button>
-        <el-button @click="clearSortOrder">Clear Sort</el-button>
-        <el-button @click="toggleAllVisibleRows">Toggle All</el-button>
-        <el-button @click="clearSelectedRows">Clear Selection</el-button>
-        <el-button @click="goToNextPage">Next Page</el-button>
-        <el-button @click="scrollTableToTop">Scroll Top</el-button>
-        <el-button type="danger" plain @click="resetDemo">Reset Demo</el-button>
-      </div>
-
-      <div class="demo-toolbar__meta">
-        <span>Pagination {{ pagination.page }} / {{ maxPage }}</span>
-        <span>Last event: {{ lastEvent }}</span>
-      </div>
+      <QueryForm
+        ref="queryFormRef"
+        :model="queryModel"
+        :items="queryItems"
+        :columns="queryColumns"
+        :label-width="96"
+        :max-visible-rows="1"
+        query-text="Apply Filters"
+        reset-text="Reset Filters"
+        @query="handleQueryFormQuery"
+        @reset="handleQueryFormReset"
+        @expand-change="handleQueryFormExpandChange"
+      >
+        <template #riskMode="{ value, setValue }">
+          <el-radio-group
+            :model-value="value as DemoRiskMode"
+            size="small"
+            @update:model-value="setValue($event)"
+          >
+            <el-radio-button value="All">All</el-radio-button>
+            <el-radio-button value="Calm">Calm</el-radio-button>
+            <el-radio-button value="Elevated">Elevated</el-radio-button>
+            <el-radio-button value="Critical">Critical</el-radio-button>
+          </el-radio-group>
+        </template>
+      </QueryForm>
     </section>
 
     <section class="demo-surface">
-      <div class="demo-surface__header">
-        <div>
-          <h2>Portfolio delivery matrix</h2>
-          <p>
-            Native Element Plus events flow through the proxy unchanged, while
-            pagination stays inside the same surface.
-          </p>
-        </div>
-        <div class="demo-surface__legend">
-          <span><i class="dot dot--live"></i>Live</span>
-          <span><i class="dot dot--watch"></i>Watch</span>
-          <span><i class="dot dot--draft"></i>Draft</span>
-        </div>
-      </div>
-
       <ProTable
         ref="proTableRef"
         :data="pagedRows"
@@ -102,7 +65,7 @@
         row-key="id"
         border
         highlight-current-row
-        :stripe="striped"
+        :stripe="appliedFilters.striped"
         table-layout="auto"
         max-height="560"
         show-summary
@@ -153,18 +116,17 @@
         </template>
 
         <template #statusCell="{ row }">
-          <div class="status-cell" :class="`status-cell--${row.status.toLowerCase()}`">
+          <div
+            class="status-cell"
+            :class="`status-cell--${row.status.toLowerCase()}`"
+          >
             <i class="dot" :class="`dot--${row.status.toLowerCase()}`"></i>
             <span>{{ row.status }}</span>
           </div>
         </template>
 
         <template #riskCell="{ row }">
-          <el-tag
-            :type="riskTagType[row.riskLevel]"
-            effect="light"
-            round
-          >
+          <el-tag :type="riskTagType[row.riskLevel]" effect="light" round>
             {{ row.riskLevel }}
           </el-tag>
         </template>
@@ -191,7 +153,9 @@
         <template #coverageCell="{ row }">
           <div class="coverage-cell">
             <strong>{{ row.automationCoverage }}%</strong>
-            <span>{{ row.automationCoverage >= 75 ? "Auto-heavy" : "Manual mix" }}</span>
+            <span>{{
+              row.automationCoverage >= 75 ? "Auto-heavy" : "Manual mix"
+            }}</span>
           </div>
         </template>
 
@@ -218,6 +182,9 @@ import type {
   ProTableInstance,
   ProTablePaginationPayload,
   ProTablePaginationProps,
+  QueryFormColumns,
+  QueryFormItem,
+  QueryFormInstance,
 } from "@/types";
 
 interface DemoUpdate {
@@ -249,15 +216,32 @@ interface DemoRow {
   updates: DemoUpdate[];
 }
 
+type DemoRiskMode = DemoRow["riskLevel"] | "All";
+
+interface DemoQueryModel {
+  keyword: string;
+  status: DemoRow["status"] | "All";
+  riskMode: DemoRiskMode;
+  dept: string | "All";
+  watchOnly: boolean;
+  showBudget: boolean;
+  showReview: boolean;
+  striped: boolean;
+}
+
 const { proxy } = getCurrentInstance();
 
 const proTableRef = ref<ProTableInstance>();
-const search = ref("");
-const statusFilter = ref<DemoRow["status"] | "All">("All");
-const highRiskOnly = ref(false);
-const showBudget = ref(true);
-const showReview = ref(true);
-const striped = ref(true);
+const queryFormRef = ref<QueryFormInstance>();
+const queryColumns: Required<QueryFormColumns> = {
+  xs: 1,
+  sm: 2,
+  md: 3,
+  lg: 4,
+  xl: 4,
+};
+const queryModel = reactive<DemoQueryModel>(createDefaultQueryModel());
+const appliedFilters = ref<DemoQueryModel>(createDefaultQueryModel());
 const selectedRows = ref<DemoRow[]>([]);
 const currentRowId = ref<number | null>(null);
 const lastEvent = ref("Ready");
@@ -278,21 +262,112 @@ const pagination = reactive<ProTablePaginationProps>({
 });
 
 const rows = ref<DemoRow[]>(createRows());
+const deptOptions = computed(() => {
+  const departments = Array.from(
+    new Set(rows.value.map((row: DemoRow) => row.dept.name)),
+  );
+  return ["All", ...departments].map((name) => ({
+    label: name,
+    value: name,
+  }));
+});
+
+const queryItems = computed<QueryFormItem[]>(() => [
+  {
+    prop: "keyword",
+    label: "Keyword",
+    component: "el-input",
+    componentProps: (model: Record<string, unknown>) => ({
+      placeholder:
+        typeof model.status === "string" && model.status !== "All"
+          ? `Search in ${model.status} workspaces`
+          : "Search workspace, owner, or department",
+    }),
+  },
+  {
+    prop: "status",
+    label: "Status",
+    component: "el-select",
+    options: [
+      { label: "All states", value: "All" },
+      { label: "Live", value: "Live" },
+      { label: "Watch", value: "Watch" },
+      { label: "Draft", value: "Draft" },
+    ],
+  },
+  {
+    prop: "riskMode",
+    label: "Risk",
+    component: "el-input",
+    slot: "riskMode",
+  },
+  {
+    prop: "dept",
+    label: "Department",
+    component: "el-select",
+    options: deptOptions.value,
+  },
+  {
+    prop: "watchOnly",
+    label: "Watch Focus",
+    component: "el-switch",
+    visible: (model: Record<string, unknown>) => model.status === "All",
+    componentProps: {
+      activeText: "Watch only",
+      inactiveText: "All status",
+    },
+  },
+  {
+    prop: "showBudget",
+    label: "Budget Col",
+    component: "el-switch",
+    componentProps: {
+      activeText: "Show",
+      inactiveText: "Hide",
+    },
+  },
+  {
+    prop: "showReview",
+    label: "Review Col",
+    component: "el-switch",
+    componentProps: {
+      activeText: "Show",
+      inactiveText: "Hide",
+    },
+  },
+  {
+    prop: "striped",
+    label: "Stripe",
+    component: "el-switch",
+    componentProps: {
+      activeText: "Striped",
+      inactiveText: "Flat",
+    },
+  },
+]);
 
 const filteredRows = computed(() => {
-  const keyword = search.value.trim().toLowerCase();
+  const { keyword, status, riskMode, dept, watchOnly } = appliedFilters.value;
+  const normalizedKeyword = keyword.trim().toLowerCase();
 
   return rows.value.filter((row: DemoRow) => {
     const matchesKeyword =
-      keyword === "" ||
-      row.workspaceName.toLowerCase().includes(keyword) ||
-      row.owner.name.toLowerCase().includes(keyword) ||
-      row.dept.name.toLowerCase().includes(keyword);
-    const matchesStatus =
-      statusFilter.value === "All" || row.status === statusFilter.value;
-    const matchesRisk = !highRiskOnly.value || row.riskLevel === "Critical";
+      normalizedKeyword === "" ||
+      row.workspaceName.toLowerCase().includes(normalizedKeyword) ||
+      row.owner.name.toLowerCase().includes(normalizedKeyword) ||
+      row.dept.name.toLowerCase().includes(normalizedKeyword);
+    const matchesStatus = status === "All" || row.status === status;
+    const matchesRisk = riskMode === "All" || row.riskLevel === riskMode;
+    const matchesDept = dept === "All" || row.dept.name === dept;
+    const matchesWatchOnly = !watchOnly || row.status === "Watch";
 
-    return matchesKeyword && matchesStatus && matchesRisk;
+    return (
+      matchesKeyword &&
+      matchesStatus &&
+      matchesRisk &&
+      matchesDept &&
+      matchesWatchOnly
+    );
   });
 });
 
@@ -308,7 +383,9 @@ const maxPage = computed(() =>
 );
 
 const currentWorkspace = computed(() => {
-  const current = rows.value.find((row: DemoRow) => row.id === currentRowId.value);
+  const current = rows.value.find(
+    (row: DemoRow) => row.id === currentRowId.value,
+  );
   return current?.workspaceName ?? "None";
 });
 
@@ -392,7 +469,7 @@ const columns = computed<ProTableColumn<DemoRow>[]>(() => [
         minWidth: 120,
         align: "right",
         sortable: true,
-        visible: showBudget.value,
+        visible: appliedFilters.value.showBudget,
         formatter: (
           _row: DemoRow,
           _column: TableColumnCtx<DemoRow>,
@@ -414,7 +491,7 @@ const columns = computed<ProTableColumn<DemoRow>[]>(() => [
         label: "Next Review",
         prop: "nextReview",
         minWidth: 132,
-        visible: showReview.value,
+        visible: appliedFilters.value.showReview,
       },
     ],
   },
@@ -444,13 +521,77 @@ watch(
   { immediate: true },
 );
 
-watch(
-  [search, statusFilter, highRiskOnly],
-  () => {
-    proTableRef.value?.resetPagination();
-  },
-  { flush: "post" },
-);
+function createDefaultQueryModel(): DemoQueryModel {
+  return {
+    keyword: "",
+    status: "All",
+    riskMode: "All",
+    dept: "All",
+    watchOnly: false,
+    showBudget: true,
+    showReview: true,
+    striped: true,
+  };
+}
+
+function normalizeRiskMode(value: unknown): DemoRiskMode {
+  return value === "Calm" || value === "Elevated" || value === "Critical"
+    ? value
+    : "All";
+}
+
+function normalizeQueryModel(model: Record<string, unknown>): DemoQueryModel {
+  const defaults = createDefaultQueryModel();
+  const normalizedStatus =
+    model.status === "Live" ||
+    model.status === "Watch" ||
+    model.status === "Draft"
+      ? model.status
+      : "All";
+  const normalizedWatchOnly =
+    normalizedStatus === "All" && typeof model.watchOnly === "boolean"
+      ? model.watchOnly
+      : false;
+
+  return {
+    keyword:
+      typeof model.keyword === "string" ? model.keyword : defaults.keyword,
+    status: normalizedStatus,
+    riskMode: normalizeRiskMode(model.riskMode),
+    dept:
+      typeof model.dept === "string" && model.dept.trim() ? model.dept : "All",
+    watchOnly: normalizedWatchOnly,
+    showBudget:
+      typeof model.showBudget === "boolean"
+        ? model.showBudget
+        : defaults.showBudget,
+    showReview:
+      typeof model.showReview === "boolean"
+        ? model.showReview
+        : defaults.showReview,
+    striped:
+      typeof model.striped === "boolean" ? model.striped : defaults.striped,
+  };
+}
+
+function applyQueryFilters(model: Record<string, unknown>): void {
+  appliedFilters.value = normalizeQueryModel(model);
+  proTableRef.value?.resetPagination();
+}
+
+function handleQueryFormQuery(model: Record<string, unknown>): void {
+  applyQueryFilters(model);
+  lastEvent.value = `Query -> ${filteredRows.value.length} rows`;
+}
+
+function handleQueryFormReset(model: Record<string, unknown>): void {
+  applyQueryFilters(model);
+  lastEvent.value = "Filters reset";
+}
+
+function handleQueryFormExpandChange(expanded: boolean): void {
+  lastEvent.value = expanded ? "QueryForm expanded" : "QueryForm collapsed";
+}
 
 function createRows(): DemoRow[] {
   const workspaces = [
@@ -568,12 +709,7 @@ const getSummary: SummaryMethod<DemoRow> = ({
   });
 };
 
-function getRowClassName({
-  row,
-}: {
-  row: DemoRow;
-  rowIndex: number;
-}): string {
+function getRowClassName({ row }: { row: DemoRow; rowIndex: number }): string {
   return row.riskLevel === "Critical" ? "protable-demo__row--critical" : "";
 }
 
@@ -640,13 +776,10 @@ function scrollTableToTop(): void {
 }
 
 function resetDemo(): void {
-  search.value = "";
-  statusFilter.value = "All";
-  highRiskOnly.value = false;
-  showBudget.value = true;
-  showReview.value = true;
-  striped.value = true;
+  queryFormRef.value?.reset();
   pagination.limit = 6;
+  currentRowId.value = null;
+  selectedRows.value = [];
   proTableRef.value?.clearSelection();
   proTableRef.value?.clearSort();
   proTableRef.value?.resetPagination();
@@ -665,7 +798,11 @@ function resetDemo(): void {
   --demo-success: #1c8a63;
   --demo-warning: #d18c19;
   background:
-    radial-gradient(circle at top right, rgba(212, 104, 47, 0.08), transparent 28%),
+    radial-gradient(
+      circle at top right,
+      rgba(212, 104, 47, 0.08),
+      transparent 28%
+    ),
     linear-gradient(180deg, #f7f3ed 0%, #ffffff 28%);
   color: var(--demo-ink);
 }
@@ -742,8 +879,6 @@ function resetDemo(): void {
   padding: 20px 24px;
 }
 
-.demo-toolbar__filters,
-.demo-toolbar__actions,
 .demo-toolbar__meta {
   display: flex;
   flex-wrap: wrap;
@@ -754,6 +889,16 @@ function resetDemo(): void {
 .demo-toolbar__meta {
   color: var(--demo-subtle);
   font-size: 13px;
+}
+
+.demo-toolbar__hint {
+  color: var(--demo-subtle);
+  font-size: 12px;
+}
+
+:deep(.demo-toolbar .query-form__actions) {
+  border-top: 1px solid var(--demo-line);
+  padding-top: 10px;
 }
 
 .demo-surface__header {

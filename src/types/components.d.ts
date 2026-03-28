@@ -7,6 +7,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    QueryForm: typeof import('../components/QueryForm/index.vue')['default']
     ProTable: typeof import('../components/ProTable/index.vue')['default']
   }
 }
